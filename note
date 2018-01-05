@@ -1,0 +1,42 @@
+1. disable ASLR:
+
+sudo sh -c "echo 0 > /proc/sys/kernel/randomize_va_space"
+
+2. install jsoncpp
+git clone https://github.com/open-source-parsers/jsoncpp.git
+
+run python amalgamate.py 
+
+copy files from dist/ to your project 
+	dist/jsoncpp.cpp
+	dist/json/json.h
+	dist/json/json-forwards.h
+
+3. build jsoncpp
+
+install cmake sudo apt-get install cmake
+
+mkdir -p build/debug
+
+cd build/debug
+
+cmake -DCMAKE_BUILD_TYPE=debug -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF -
+
+DARCHIVE_INSTALL_DIR=. -G "Unix Makefiles" ../..
+
+make
+
+copy build/debug/src/lib_json/libjsoncpp.a  to your project
+
+add include <json/json.h>  in your project
+
+compile your project by g++ with specific parameters or modify the makefile
+ 
+g++ test.cpp jsoncpp.cpp -I /home/wpf/Desktop/jsoncpp/include/ -L/home/wpf/Desktop/test -ljsoncpp -std=c++11 -o t
+
+-I /home/wpf/Desktop/pin_work/mypintool
+
+
+ -L/home/wpf/Desktop/pin_work/mypintool -ljsoncpp 
+
+

@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: scanf
+Version: 1.2
+Summary: scanf-like module for Python
+Home-page: http://hkn.eecs.berkeley.edu/~dyoo/python/scanf/
+Author: Danny Yoo
+Author-email: dyoo@hkn.eecs.berkeley.edu
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN

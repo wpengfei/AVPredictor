@@ -1,10 +1,31 @@
-
-#include "callbacks.h"
-
+#include "pin.H"
+#include "structs.h"
+#include <iostream>
+#include <fstream>
+#include <stdio.h>
+#include <string.h>
 
 #define SLEEP_TIME 5
 
+#define max_size 32 // default max size for each group
+
 unsigned int ci_count = 0;
+unsigned int cur_ci = 0; //current CI that being processed
+
+unsigned int type[max_size] = {0}; // 0: to move instructions; 1: to move critical sections.
+
+unsigned int first_id[max_size] = {0};
+unsigned int first_arg1[max_size] = {0};
+unsigned int first_arg2[max_size] = {0};
+
+unsigned int second_id[max_size] = {0};
+unsigned int second_arg1[max_size] = {0};
+unsigned int second_arg2[max_size] = {0};
+
+unsigned int inter_id[max_size] = {0};
+unsigned int inter_arg1[max_size] = {0};
+unsigned int inter_arg2[max_size] = {0};
+
 
 unsigned int is_locked_type = 0;
 
@@ -29,6 +50,44 @@ ADDRESS inter_unlock = 0;
 bool first_ready = false;
 bool inter_ready = false;
 bool second_ready = false;
+
+int load_next_ci(){
+
+
+    if(cur_ci + 1 ==  max_size)
+        return 0;
+
+    printf("========================Load CI %d ==========================\n", cur_ci);
+    
+    if (type[cur_ci]){ // locked type
+        is_locked_type = type[cur_ci];
+        first_tid = first_id[cur_ci];
+        first_lock = first_arg1[cur_ci];
+        first_unlock = first_arg2[cur_ci];
+        second_tid = second_id[cur_ci];
+        second_lock = second_arg1[cur_ci];
+        second_unlock = second_arg2[cur_ci];
+        inter_tid = inter_id[cur_ci];
+        inter_lock = inter_arg1[cur_ci];
+        inter_unlock = inter_arg2[cur_ci];
+    }
+    else{
+        is_locked_type = type[cur_ci];
+        first_tid = first_id[cur_ci];
+        first_inst = first_arg1[cur_ci];
+        first_addr = first_arg2[cur_ci];
+        second_tid = second_id[cur_ci];
+        second_inst = second_arg1[cur_ci];
+        second_addr = second_arg2[cur_ci];
+        inter_tid = inter_id[cur_ci];
+        inter_inst = inter_arg1[cur_ci];
+        inter_addr = inter_arg2[cur_ci];
+
+    }
+    cur_ci++;
+    return 1;
+
+}
 
 VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
     //delay the inter to between first and second
@@ -99,6 +158,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             if(DEBUG_REPLAY){
                 printf("\033[01;34m[5][execute Second] inst:%x, addr:%x, tid:%u \033[0m\n",(ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
             }
+            load_next_ci();
             return;
         }
     }
@@ -201,7 +261,7 @@ VOID beforeThreadUnLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
             if(DEBUG_REPLAY){
                 printf("\033[01;34m[beforeThreadUnLock][executed Second] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
             }
-            //PIN_GetLock(&lock, tid+1);
+            load_next_ci();
             return;
         }
         
@@ -209,12 +269,6 @@ VOID beforeThreadUnLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
   
     //PIN_ReleaseLock(&lock);
 }
-
-
-
-
-
-
 
 
 // Is called for every instruction and instruments reads and writes
@@ -305,6 +359,8 @@ INT32 Usage()
 /*   argc, argv are the entire command line: pin -t <toolname> -- ...    */
 /* ===================================================================== */
 
+
+
 int main(int argc, char * argv[])
 {
     // Initialize symbol table code, needed for rtn instrumentation
@@ -312,17 +368,21 @@ int main(int argc, char * argv[])
 
     replay_log = fopen("replay/file_result.log", "r");
 
-    while (1){
+    ci_count = 0;
+
+    while (ci_count < max_size){
         if((fscanf(replay_log,"%u[%u]%x,%x; [%u]%x,%x; [%u]%x,%x\n",
-                &is_locked_type, &first_tid, &first_inst, &first_addr, 
-                &second_tid, &second_inst, &second_addr, 
-                &inter_tid, &inter_inst, &inter_addr))!=EOF){
+                &type[ci_count], &first_id[ci_count], &first_arg1[ci_count], &first_arg2[ci_count], 
+                &second_id[ci_count], &second_arg1[ci_count], &second_arg2[ci_count], 
+                &inter_id[ci_count], &inter_arg1[ci_count], &inter_arg2[ci_count]))!=EOF){
 
 
             printf("\033[22;36m[load CI from file]:%u[%u]%x,%x; [%u]%x,%x; [%u]%x,%x \033[0m\n",
-                is_locked_type, first_tid, first_inst, first_addr, 
-                second_tid, second_inst, second_addr, 
-                inter_tid, inter_inst, inter_addr);
+                type[ci_count], first_id[ci_count], first_arg1[ci_count], first_arg2[ci_count], 
+                second_id[ci_count], second_arg1[ci_count], second_arg2[ci_count], 
+                inter_id[ci_count], inter_arg1[ci_count], inter_arg2[ci_count]);
+
+            ci_count++;
 
 
         }
@@ -331,23 +391,11 @@ int main(int argc, char * argv[])
 
     }
 
-    //fscanf(replay_log,"%u[%u]%x,%x; [%u]%x,%x; [%u]%x,%x\n",
-        //&is_locked_type, &first_tid, &first_inst, &first_addr, 
-                //&second_tid, &second_inst, &second_addr, 
-                //&inter_tid, &inter_inst, &inter_addr);
+    printf("Loaded %d CIs for replay\n", ci_count);
 
-    printf("========================================Replay\n");
-    
-    /* convert to critical section situation format */
-    if(is_locked_type){
-        first_lock = first_inst;
-        first_unlock = first_addr;
-        second_lock = second_inst;
-        second_unlock = second_addr;
-        inter_lock = inter_inst;
-        inter_unlock = inter_addr;
+    cur_ci = 0;
+    load_next_ci();
 
-    }
 
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();

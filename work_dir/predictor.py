@@ -78,11 +78,11 @@ def print_ci_list():
 def print_result_list():
 	print "result_list  =========================================="
 	for i in result_list:
-		print "first:",i["first"]
+		#print "first:",i["first"]
 		print "first_cs:",i["first_cs"]
-		print "second:",i["second"]
+		#print "second:",i["second"]
 		print "second_cs:",i["second_cs"]
-		print "inter:",i["inter"]
+		#print "inter:",i["inter"]
 		print "inter_cs:",i["inter_cs"]
 		print "-----------------------"
 
@@ -353,14 +353,14 @@ def prune():
 			if first["tid"] == cs["tid"] and first["time"] > cs["stime"] and first["time"] < cs["ftime"] \
 				and second["time"] > cs["stime"] and second["time"] < cs["ftime"]:
 				entry_v = cs["l_ev"]
-				print "entry_v", entry_v
+				#print "entry_v", entry_v
 				for cs2 in cs_list:
 					if inter["tid"] == cs2["tid"] and inter["time"] > cs2["stime"] and inter["time"] < cs2["ftime"] \
 						and cs2["l_ev"] == entry_v:
 						found = True;
 
 		if found: # protected by the same lock, abandon
-			print_ci(first, second, inter) 
+			#print_ci(first, second, inter) 
 			continue
 
 		# check for syncs
@@ -436,14 +436,15 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 
 	#print "enter grouper\n"
 	if group_num == 0:
-		group_fhandler = open("replay/group_0.log", "w")
-		group_fhandler.write(msg_str)
-		group_fhandler.close()	
+		#group_fhandler = open("replay/group_0.log", "w")
+		#group_fhandler.write(msg_str)
+		#group_fhandler.close()	
 
 		ci = {} #candidate interleaving (CI) represented by time intervals
 		ci["first_interval"] = first_interval
 		ci["second_interval"] = second_interval
 		ci["inter_interval"] = inter_interval
+		ci["msg"] = msg_str
 		group = []
 		group.append(ci)
 		group_set.append(group)
@@ -451,6 +452,7 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 
 		print "init, group_num:", group_num
 		print ci
+		print msg_str
 
 	else:
 		insert_id = -1 # the id of the group to be inserted
@@ -463,6 +465,11 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 				f_interval = group_set[i][j]["first_interval"]
 				s_interval = group_set[i][j]["second_interval"]
 				i_interval = group_set[i][j]["inter_interval"]
+
+				if first_interval[0] == f_interval[0] and first_interval[1] == f_interval[1] and \
+					second_interval[0] == s_interval[0] and second_interval[1] == s_interval[1] and \
+					inter_interval[0] == i_interval[0] and inter_interval[1] == i_interval[1]:
+						return # duplicate report, abandon
 
 				if first_interval[0]>f_interval[1] and first_interval[0]>s_interval[1] and first_interval[0]>i_interval[1] and \
 					second_interval[0]>f_interval[1] and second_interval[0]>s_interval[1] and second_interval[0]>i_interval[1] and \
@@ -495,34 +502,76 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 			ci["first_interval"] = first_interval
 			ci["second_interval"] = second_interval
 			ci["inter_interval"] = inter_interval
+			ci["msg"] = msg_str
 			group = []
 			group.append(ci)
 			group_set.append(group)
 
-			file_name = "replay/group_"+str(group_num)+".log"
-			group_fhandler = open(file_name, "w")
-			group_fhandler.write(msg_str)
-			group_fhandler.close()
+			#file_name = "replay/group_"+str(group_num)+".log"
+			#group_fhandler = open(file_name, "w")
+			#group_fhandler.write(msg_str)
+			#group_fhandler.close()
 
 			group_num = group_num + 1
 
 			print "start new group, group_num:", group_num
 			print ci
+			print msg_str
 
 		else: # insert to an old group by "insert_id"
 			ci = {}
 			ci["first_interval"] = first_interval
 			ci["second_interval"] = second_interval
 			ci["inter_interval"] = inter_interval
+			ci["msg"] = msg_str
 			group_set[insert_id].append(ci)
 
-			file_name = "replay/group_"+str(insert_id)+".log"
-			group_fhandler = open(file_name, "w+")
-			group_fhandler.write(msg_str)
-			group_fhandler.close()
+			#file_name = "replay/group_"+str(insert_id)+".log"
+			#group_fhandler = open(file_name, "w+")
+			#group_fhandler.write(msg_str)
+			#group_fhandler.close()
 
 			print " insert to an old group", i, "group num:", group_num
 			print ci
+			print msg_str
+
+	# write to the group with sorted order
+	for i in range(group_num):
+		origin_list = group_set[i]
+		l1 = len(origin_list)
+		assert l1 >= 1
+
+		sorted_list = []
+		
+		for j in range(l1):
+			if j == 0:
+				sorted_list.append(origin_list[j])
+			elif j == 1:
+				if origin_list[j]["first_interval"][0] < sorted_list[0]["first_interval"][0]:
+					sorted_list.insert(0, origin_list[j])
+				else:
+					sorted_list.append(origin_list[j])
+			else:
+				l2 = len(sorted_list)
+				if origin_list[j]["first_interval"][0] < sorted_list[0]["first_interval"][0]:
+					sorted_list.insert(0, origin_list[j])
+				elif origin_list[j]["first_interval"][0] > sorted_list[l2-1]["first_interval"][0]:
+					sorted_list.append(origin_list[j])
+				else:
+					k = 0
+					while k+1 < l2: 
+						if origin_list[j]["first_interval"][0] > sorted_list[k]["first_interval"][0] and \
+						origin_list[j]["first_interval"][0] < sorted_list[k+1]["first_interval"][0]:
+
+							sorted_list.insert(k+1, origin_list[j])
+
+						k = K + 1
+
+		file_name = "replay/group_"+str(i)+".log"
+		group_fhandler = open(file_name, "w")				
+		for j in range(l1):
+			group_fhandler.write(sorted_list[j]["msg"])
+			group_fhandler.close()
 
 
 
@@ -534,6 +583,7 @@ def find_identifier():
 
 	file_result_handler = open("replay/file_result.log", "w")
 	for re in result_list:
+		#print "re", re
 		if re["first_cs"] != None and re["second_cs"] != None and  re["inter_cs"] != None:
 			if re["first_cs"]["l_ev"] ==  re["second_cs"]["l_ev"] and re["first_cs"]["l_ev"] ==  re["inter_cs"]["l_ev"]:
 
@@ -614,7 +664,7 @@ print_cs_list()
 
 prune()
 
-#print_result_list()
+print_result_list()
 
 find_identifier()
 

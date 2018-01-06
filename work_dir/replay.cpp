@@ -366,10 +366,23 @@ int main(int argc, char * argv[])
     // Initialize symbol table code, needed for rtn instrumentation
     PIN_InitSymbols();
 
-    replay_log = fopen("replay/file_result.log", "r");
-
+    printf("=========================\n");
+    //printf("%d\n",argc);
+    //printf("%s\n",argv[0]);
+    //printf("%s\n",argv[1]);
+    //printf("%s\n",argv[2]);
+    //printf("%s\n",argv[3]);
+    //printf("%s\n",argv[4]);
+    //printf("%s\n",argv[5]);
+    //printf("%s\n",argv[6]);
+    //printf("%s\n",argv[7]);
+    replay_log = fopen(argv[7], "r"); //argv[7] is the file of the groupd results
+    if (!replay_log){
+        printf("Open file %s failed!\n", argv[7]);
+        return 0;
+    }
+    
     ci_count = 0;
-
     while (ci_count < max_size){
         if((fscanf(replay_log,"%u[%u]%x,%x; [%u]%x,%x; [%u]%x,%x\n",
                 &type[ci_count], &first_id[ci_count], &first_arg1[ci_count], &first_arg2[ci_count], 

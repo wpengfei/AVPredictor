@@ -581,7 +581,7 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 # lock/unlock statements to control the thread scheduling.
 def find_identifier():
 
-	file_result_handler = open("replay/file_result.log", "w")
+	#file_result_handler = open("replay/file_result.log", "w")
 	for re in result_list:
 		#print "re", re
 		if re["first_cs"] != None and re["second_cs"] != None and  re["inter_cs"] != None:
@@ -638,9 +638,9 @@ def find_identifier():
 			grouper(first_interval, second_interval, inter_interval, msg_str)
 		
 		#print msg_str
-		file_result_handler.write(msg_str)	
+		#file_result_handler.write(msg_str)	
 		
-	file_result_handler.close()
+	#file_result_handler.close()
 
 
 

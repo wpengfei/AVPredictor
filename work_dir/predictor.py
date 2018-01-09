@@ -17,7 +17,7 @@ def load_sync_traces():
 		each_line = file_sync_handler.readline()
 
 		if each_line:
-			tid, ty, time = scanf.sscanf(each_line,"tid:%d,type:%s,time:%d")
+			tid, time, ty = scanf.sscanf(each_line,"tid:%d,time:%d,type:%s\n")
 
 			sync = {}
 			sync["tid"] = tid
@@ -36,7 +36,7 @@ def load_lock_traces():
 		each_line = file_lock_handler.readline()
 
 		if each_line:
-			tid, op, time, callsite_v, entry_v = scanf.sscanf(each_line,"tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x")
+			tid, op, time, callsite_v, entry_v = scanf.sscanf(each_line,"tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x\n")
 
 			callsite_v = hex(callsite_v)
 			entry_v = hex(entry_v)
@@ -78,11 +78,13 @@ def print_ci_list():
 def print_result_list():
 	print "result_list  =========================================="
 	for i in result_list:
-		#print "first:",i["first"]
+		print "first:",i["first"]
+		
+		print "second:",i["second"]
+		
+		print "inter:",i["inter"]
 		print "first_cs:",i["first_cs"]
-		#print "second:",i["second"]
 		print "second_cs:",i["second_cs"]
-		#print "inter:",i["inter"]
 		print "inter_cs:",i["inter_cs"]
 		print "-----------------------"
 
@@ -233,41 +235,42 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 		l1 = len(tlist1)
 
 		if l0 >= 2:
-			for i in range(l0):
-				for j in range(i+1,l0):
-					if tlist0[i]["op"] == "R" and tlist0[j]["op"] == "R":
-						ret_list = find_write_trace(tlist1)
-						for it in ret_list:
-							ci = {}
-							ci["first"] = tlist0[i]
-							ci["second"] = tlist0[j]
-							ci["inter"] = it
-							ci_list.append(ci)
+			for i in range(l0-1):
+				# first and second in a CI must not be interleaved by an access from the same thread
+				# aka. first and second must be close to each other in the list
+				if tlist0[i]["op"] == "R" and tlist0[i+1]["op"] == "R":
+					ret_list = find_write_trace(tlist1)
+					for it in ret_list:
+						ci = {}
+						ci["first"] = tlist0[i]
+						ci["second"] = tlist0[i+1]
+						ci["inter"] = it
+						ci_list.append(ci)
 
-					elif tlist0[i]["op"] == "W" and tlist0[j]["op"] == "R":
-						ret_list = find_write_trace(tlist1)
-						for it in ret_list:
-							ci = {}
-							ci["first"] = tlist0[i]
-							ci["second"] = tlist0[j]
-							ci["inter"] = it
-							ci_list.append(ci)
-					elif tlist0[i]["op"] == "R" and tlist0[j]["op"] == "W":
-						ret_list = find_write_trace(tlist1)
-						for it in ret_list:
-							ci = {}
-							ci["first"] = tlist0[i]
-							ci["second"] = tlist0[j]
-							ci["inter"] = it
-							ci_list.append(ci)
-					elif tlist0[i]["op"] == "W" and tlist0[j]["op"] == "W":
-						ret_list = find_read_trace(tlist1)
-						for it in ret_list:
-							ci = {}
-							ci["first"] = tlist0[i]
-							ci["second"] = tlist0[j]
-							ci["inter"] = it
-							ci_list.append(ci)
+				elif tlist0[i]["op"] == "W" and tlist0[i+1]["op"] == "R":
+					ret_list = find_write_trace(tlist1)
+					for it in ret_list:
+						ci = {}
+						ci["first"] = tlist0[i]
+						ci["second"] = tlist0[i+1]
+						ci["inter"] = it
+						ci_list.append(ci)
+				elif tlist0[i]["op"] == "R" and tlist0[i+1]["op"] == "W":
+					ret_list = find_write_trace(tlist1)
+					for it in ret_list:
+						ci = {}
+						ci["first"] = tlist0[i]
+						ci["second"] = tlist0[i+1]
+						ci["inter"] = it
+						ci_list.append(ci)
+				elif tlist0[i]["op"] == "W" and tlist0[i+1]["op"] == "W":
+					ret_list = find_read_trace(tlist1)
+					for it in ret_list:
+						ci = {}
+						ci["first"] = tlist0[i]
+						ci["second"] = tlist0[i+1]
+						ci["inter"] = it
+						ci_list.append(ci)
 
 		if l1 >= 2:
 			for i in range(l1): # switch tlist0 and tlist 1
@@ -450,9 +453,9 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 		group_set.append(group)
 		group_num = group_num + 1
 
-		print "init, group_num:", group_num
-		print ci
-		print msg_str
+		#print "init, group_num:", group_num
+		#print ci
+		#print msg_str
 
 	else:
 		insert_id = -1 # the id of the group to be inserted
@@ -514,9 +517,9 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 
 			group_num = group_num + 1
 
-			print "start new group, group_num:", group_num
-			print ci
-			print msg_str
+			#print "start new group, group_num:", group_num
+			#print ci
+			#print msg_str
 
 		else: # insert to an old group by "insert_id"
 			ci = {}
@@ -531,9 +534,9 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 			#group_fhandler.write(msg_str)
 			#group_fhandler.close()
 
-			print " insert to an old group", i, "group num:", group_num
-			print ci
-			print msg_str
+			#print " insert to an old group", i, "group num:", group_num
+			#print ci
+			#print msg_str
 
 	# write to the group with sorted order
 	for i in range(group_num):
@@ -565,13 +568,13 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 
 							sorted_list.insert(k+1, origin_list[j])
 
-						k = K + 1
+						k = k + 1
 
 		file_name = "replay/group_"+str(i)+".log"
 		group_fhandler = open(file_name, "w")				
 		for j in range(l1):
 			group_fhandler.write(sorted_list[j]["msg"])
-			group_fhandler.close()
+		group_fhandler.close()
 
 
 
@@ -664,7 +667,7 @@ print_cs_list()
 
 prune()
 
-print_result_list()
+#print_result_list()
 
 find_identifier()
 

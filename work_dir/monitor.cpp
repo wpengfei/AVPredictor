@@ -137,7 +137,7 @@ VOID afterThreadBarrier(THREADID tid)
         printf("\033[01;33m[ThreadBarrier] T %d Barrier, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    fprintf(file_sync, "tid:%d,type:%s,time:%d\n", tid, "barrier", timestamp);
+    fprintf(file_sync, "tid:%d,time:%d,type:%s\n", tid, timestamp, "barrier");
 
     //synch s = {"barrier", threadid, timestamp};
     //synchTable.push_back(s);
@@ -154,7 +154,7 @@ VOID afterThreadCondWait(THREADID tid)
         printf("\033[01;33m[ThreadCondWait] T %d Condwait, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    fprintf(file_sync, "tid:%d,type:%s,time:%d\n", tid, "condwait", timestamp);
+    fprintf(file_sync, "tid:%d,time:%d,type:%s\n", tid, timestamp, "condwait");
 
     //synch s = {"condwait", threadid, timestamp};
     //synchTable.push_back(s);
@@ -171,7 +171,7 @@ VOID afterThreadCondTimedwait(THREADID tid)
         printf("\033[01;33m[ThreadCondTimedwait] T %d CondTimewait, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    fprintf(file_sync, "tid:%d,type:%s,time:%d\n", tid, "condtimewait", tid);
+    fprintf(file_sync, "tid:%d,time:%d,type:%s\n", tid, tid, "condtimewait");
     //synch s = {"condtimewait", threadid, timestamp};
     //synchTable.push_back(s);
 
@@ -187,7 +187,7 @@ VOID afterThreadSleep(THREADID tid)
         printf("\033[01;33m[ThreadSleep] T %d sleep, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    fprintf(file_sync, "tid:%d,type:%s,time:%d\n", tid, "sleep", tid);
+    fprintf(file_sync, "tid:%d,time:%d,type:%s\n", tid, tid, "sleep");
 
     //synch s = {"sleep", threadid, timestamp};
     //synchTable.push_back(s);

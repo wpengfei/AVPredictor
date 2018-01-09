@@ -1,5 +1,5 @@
 import scanf
-
+import tool
 
 trace_mem = {} # structured memory traces
 ci_list = [] # list of candidate cis
@@ -60,51 +60,11 @@ def load_lock_traces():
 
 	file_lock_handler.close()
 
-def print_ci(first, second, inter):
-	print "-----------------------"
-	print "first:", first
-	print "second:", second
-	print "inter:", inter
-	print "-----------------------"
 
-def print_ci_list():
-	print "ci_list  =========================================="
-	for i in ci_list:
-		print "first:",i["first"]
-		print "second:",i["second"]
-		print "inter:",i["inter"]
-		print "-----------------------"
 
-def print_result_list():
-	print "result_list  =========================================="
-	for i in result_list:
-		print "first:",i["first"]
-		
-		print "second:",i["second"]
-		
-		print "inter:",i["inter"]
-		print "first_cs:",i["first_cs"]
-		print "second_cs:",i["second_cs"]
-		print "inter_cs:",i["inter_cs"]
-		print "-----------------------"
 
-def print_cs_list():
-	print "cs_list result =========================================="
-	for i in cs_list:
-		print i
 
-def show_statics():
-	print "static result=========================================="
-	print "result num:", len(result_list)
-	print "group_num:", group_num
-	print "visited addresses num:", len(trace_mem)
-
-	for addr in trace_mem:
-		tid_list = trace_mem[addr]["tid_list"]
-		print "addr: 0x",addr
-		for i in range(len(tid_list)):
-			print "\ttid",tid_list[i],":", len(trace_mem[addr][str(tid_list[i])]["trace_list"]),"access,", "optag:",trace_mem[addr][str(tid_list[i])]["optag"]
-		 
+ 
 
 '''
 trace_mem = {"addr1": addr_dict1, "addr2":addr_dict2}
@@ -120,14 +80,7 @@ tlist = [trace1, trace2]
 
 
 '''
-def print_mem_trace():
-	for ad in trace_mem:
-		print "=addr:", ad, "thread_num", trace_mem[ad]["thread_num"], "tid_list", trace_mem[ad]["tid_list"]
-		for tid in trace_mem[ad]:
-			if tid != "thread_num" and tid != "tid_list":
-				print "==>tid", tid, "optag", trace_mem[ad][tid]["optag"]
-				for it in trace_mem[ad][tid]["trace_list"]:
-					print "====>", it 
+
 
 def load_mem_traces():
 	file_mem_handler = open("file_mem_access.log", "r")
@@ -206,21 +159,29 @@ def load_mem_traces():
 
 
 
-def find_write_trace(tlist):
+def find_write_trace(tlist,time1,time2):
+	assert time1 < time2
 	ret = []
 	for it in tlist:
-		if it["op"] == "W":
-			ret.append(it)
+		if it["time"] > time1 and it["time"] < time2:
+			continue
+		else:
+			if it["op"] == "W" :
+				ret.append(it)
 	return ret
 
-def find_read_trace(tlist):
+def find_read_trace(tlist,time1,time2):
+	assert time1 < time2
 	ret = []
 	for it in tlist:
-		if it["op"] == "R":
-			ret.append(it)
+		if it["time"] > time1 and it["time"] < time2:
+			continue
+		else:
+			if it["op"] == "R" :
+				ret.append(it)
 	return ret
 
-
+# a "tid_dict" contains the memory traces that accessing the same addr from the same thread
 def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 	if tid_dict0["optag"] == 0 and tid_dict1["optag"] == 0:
 		return None
@@ -239,7 +200,7 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 				# first and second in a CI must not be interleaved by an access from the same thread
 				# aka. first and second must be close to each other in the list
 				if tlist0[i]["op"] == "R" and tlist0[i+1]["op"] == "R":
-					ret_list = find_write_trace(tlist1)
+					ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
 					for it in ret_list:
 						ci = {}
 						ci["first"] = tlist0[i]
@@ -248,7 +209,7 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 						ci_list.append(ci)
 
 				elif tlist0[i]["op"] == "W" and tlist0[i+1]["op"] == "R":
-					ret_list = find_write_trace(tlist1)
+					ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
 					for it in ret_list:
 						ci = {}
 						ci["first"] = tlist0[i]
@@ -256,7 +217,7 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 						ci["inter"] = it
 						ci_list.append(ci)
 				elif tlist0[i]["op"] == "R" and tlist0[i+1]["op"] == "W":
-					ret_list = find_write_trace(tlist1)
+					ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
 					for it in ret_list:
 						ci = {}
 						ci["first"] = tlist0[i]
@@ -264,7 +225,7 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 						ci["inter"] = it
 						ci_list.append(ci)
 				elif tlist0[i]["op"] == "W" and tlist0[i+1]["op"] == "W":
-					ret_list = find_read_trace(tlist1)
+					ret_list = find_read_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
 					for it in ret_list:
 						ci = {}
 						ci["first"] = tlist0[i]
@@ -273,64 +234,65 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 						ci_list.append(ci)
 
 		if l1 >= 2:
-			for i in range(l1): # switch tlist0 and tlist 1
-				for j in range(i+1,l1):
-					if tlist1[i]["op"] == "R" and tlist1[j]["op"] == "R":
-						ret_list = find_write_trace(tlist0)
-						for it in ret_list:
-							ci = {}
-							ci["first"] = tlist1[i]
-							ci["second"] = tlist1[j]
-							ci["inter"] = it
-							ci_list.append(ci)
+			for i in range(l1-1): # switch tlist0 and tlist 1
+			
+				if tlist1[i]["op"] == "R" and tlist1[i+1]["op"] == "R":
+					ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
+					for it in ret_list:
+						ci = {}
+						ci["first"] = tlist1[i]
+						ci["second"] = tlist1[i+1]
+						ci["inter"] = it
+						ci_list.append(ci)
 
-					elif tlist1[i]["op"] == "W" and tlist1[j]["op"] == "R":
-						ret_list = find_write_trace(tlist0)
-						for it in ret_list:
-							ci = {}
-							ci["first"] = tlist1[i]
-							ci["second"] = tlist1[j]
-							ci["inter"] = it
-							ci_list.append(ci)
-					elif tlist1[i]["op"] == "R" and tlist1[j]["op"] == "W":
-						ret_list = find_write_trace(tlist0)
-						for it in ret_list:
-							ci = {}
-							ci["first"] = tlist1[i]
-							ci["second"] = tlist1[j]
-							ci["inter"] = it
-							ci_list.append(ci)
-					elif tlist1[i]["op"] == "W" and tlist1[j]["op"] == "W":
-						ret_list = find_read_trace(tlist0)
-						for it in ret_list:
-							ci = {}
-							ci["first"] = tlist1[i]
-							ci["second"] = tlist1[j]
-							ci["inter"] = it
-							ci_list.append(ci)
+				elif tlist1[i]["op"] == "W" and tlist1[i+1]["op"] == "R":
+					ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
+					for it in ret_list:
+						ci = {}
+						ci["first"] = tlist1[i]
+						ci["second"] = tlist1[i+1]
+						ci["inter"] = it
+						ci_list.append(ci)
+				elif tlist1[i]["op"] == "R" and tlist1[i+1]["op"] == "W":
+					ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
+					for it in ret_list:
+						ci = {}
+						ci["first"] = tlist1[i]
+						ci["second"] = tlist1[i+1]
+						ci["inter"] = it
+						ci_list.append(ci)
+				elif tlist1[i]["op"] == "W" and tlist1[i+1]["op"] == "W":
+					ret_list = find_read_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
+					for it in ret_list:
+						ci = {}
+						ci["first"] = tlist1[i]
+						ci["second"] = tlist1[i+1]
+						ci["inter"] = it
+						ci_list.append(ci)
 
 
 
 def find_thread_paris_for_same_addr():
 
-	for ad in trace_mem:
-		if trace_mem[ad]["thread_num"] < 2:
+	for addr in trace_mem:
+		if trace_mem[addr]["thread_num"] < 2:
+			#print "thread num < 2"
 			continue
 		else:
-			tid_list = trace_mem[ad]["tid_list"]
+			tid_list = trace_mem[addr]["tid_list"]
 			l = len(tid_list)
 			assert l >= 2
 			if l == 2: # for most of the cases, only two threads involved
-				tid_dict0 = trace_mem[ad][tid_list[0]]
-				tid_dict1 = trace_mem[ad][tid_list[1]]
+				tid_dict0 = trace_mem[addr][tid_list[0]]
+				tid_dict1 = trace_mem[addr][tid_list[1]]
 
 				find_ci_from_thread_pair(tid_dict0, tid_dict1)
 						
 			else:
 				for i in range(l):
-					tid_dict0 = trace_mem[ad][tid_list[i]]
+					tid_dict0 = trace_mem[addr][tid_list[i]]
 					for j in range(i+1,l):
-						tid_dict1 = trace_mem[ad][tid_list[j]]
+						tid_dict1 = trace_mem[addr][tid_list[j]]
 						find_ci_from_thread_pair(tid_dict0, tid_dict1)
 
 
@@ -647,13 +609,25 @@ def find_identifier():
 
 
 
+def show_statics():
+	print "static result=========================================="
+	print "CI num:", len(ci_list)
+	print "result num:", len(result_list)
+	print "group_num:", group_num
+	print "visited addresses num:", len(trace_mem)
 
+	for addr in trace_mem:
+		tid_list = trace_mem[addr]["tid_list"]
+		print "addr: 0x",addr
+		for i in range(len(tid_list)):
+			print "\ttid",tid_list[i],":", len(trace_mem[addr][str(tid_list[i])]["trace_list"]),"access,", "optag:",trace_mem[addr][str(tid_list[i])]["optag"]
+		
 
 
 
 load_mem_traces()
 
-#print_mem_trace()
+#tool.print_mem_trace(trace_mem)
 
 load_lock_traces()
 
@@ -661,13 +635,13 @@ load_sync_traces()
 
 find_thread_paris_for_same_addr()
 
-#print_ci_list()
+#tool.print_ci_list(ci_list)
 
-print_cs_list()
+#tool.print_cs_list(cs_list)
 
 prune()
 
-#print_result_list()
+#tool.print_result_list(result_list)
 
 find_identifier()
 

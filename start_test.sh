@@ -15,12 +15,12 @@ rm replay/*
 #mozilla  1 1
 
 echo ================================================ monitor run
-time ../pin-3.2-81205-gcc-linux/pin -t  obj-ia32/monitor.so -- ../test_dir/mysql_169 
-#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/monitor.so -- ../test_dir/FFT -p 2
-#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/monitor.so -- ~/Desktop/pin_work/test_cases/pfscan/pfscan -d file ~/Desktop/pin_work/test_cases/pfscan/pfscan.c
+#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/monitor.so -- ../test_dir/mysql_169 
+time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/monitor.so -- ../test_dir/RADIX -p 2
+#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/monitor.so -- ../test_cases/pfscan/pfscan -d file ../test_cases/pfscan/pfscan.c
 
 echo ================================================ prediction 
-python predictor.py
+time python predictor.py
 
 
 
@@ -34,6 +34,7 @@ do
     then
     	echo ${curfile}
     	#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/replay.so  -- ~/Desktop/pin_work/test_dir/mysql_169 "replay/"${curfile}
+    	#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/replay.so -- ../test_cases/pfscan/pfscan -d file ../test_cases/pfscan/pfscan.c "replay/"${curfile}
 
    
     fi

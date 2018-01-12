@@ -1,7 +1,7 @@
 import scanf
 import tool
 
-trace_mem = {} # structured memory traces
+mem_trace = {} # structured memory traces
 ci_list = [] # list of candidate cis
 cs_list = [] # list of critical sections
 sync_list = [] #list of sync primitives
@@ -67,7 +67,7 @@ def load_lock_traces():
  
 
 '''
-trace_mem = {"addr1": addr_dict1, "addr2":addr_dict2}
+mem_trace = {"addr1": addr_dict1, "addr2":addr_dict2}
 
 addr_dict = {"thread_num":2, "tid_list":tid_list, "tid1":tid_dict1, "tid2": tid_dict2}
 
@@ -104,20 +104,20 @@ def load_mem_traces():
 			trace["addr"] = addr
 			trace["rtn"] = rtn
 
-			if  trace_mem.has_key(addr):
+			if  mem_trace.has_key(addr):
 
-				if trace_mem[addr].has_key(tid):
+				if mem_trace[addr].has_key(tid):
 
-					optag = trace_mem[addr][tid]["optag"]
+					optag = mem_trace[addr][tid]["optag"]
 
 					if  op == "R" and optag == 1:
 						optag = 2;
-						trace_mem[addr][tid]["optag"] = optag
+						mem_trace[addr][tid]["optag"] = optag
 					elif op == "W" and optag == 0:
 						optag = 2;
-						trace_mem[addr][tid]["optag"] = optag
+						mem_trace[addr][tid]["optag"] = optag
 
-					trace_mem[addr][tid]["trace_list"].append(trace)
+					mem_trace[addr][tid]["trace_list"].append(trace)
 
 				else:
 					tlist = []
@@ -130,9 +130,9 @@ def load_mem_traces():
 						tid_dict["optag"] = 1
 					tid_dict["trace_list"] = tlist
 
-					trace_mem[addr]["thread_num"] = trace_mem[addr]["thread_num"] + 1
-					trace_mem[addr]["tid_list"].append(tid)
-					trace_mem[addr][tid] = tid_dict
+					mem_trace[addr]["thread_num"] = mem_trace[addr]["thread_num"] + 1
+					mem_trace[addr]["tid_list"].append(tid)
+					mem_trace[addr][tid] = tid_dict
 
 			else:
 				tlist = []
@@ -153,7 +153,7 @@ def load_mem_traces():
 				addr_dict["tid_list"] = tid_list
 				addr_dict[tid] = tid_dict
 				
-				trace_mem[addr] = addr_dict
+				mem_trace[addr] = addr_dict
 
 	file_mem_handler.close()
 
@@ -274,25 +274,25 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 
 def find_thread_paris_for_same_addr():
 
-	for addr in trace_mem:
-		if trace_mem[addr]["thread_num"] < 2:
+	for addr in mem_trace:
+		if mem_trace[addr]["thread_num"] < 2:
 			#print "thread num < 2"
 			continue
 		else:
-			tid_list = trace_mem[addr]["tid_list"]
+			tid_list = mem_trace[addr]["tid_list"]
 			l = len(tid_list)
 			assert l >= 2
 			if l == 2: # for most of the cases, only two threads involved
-				tid_dict0 = trace_mem[addr][tid_list[0]]
-				tid_dict1 = trace_mem[addr][tid_list[1]]
+				tid_dict0 = mem_trace[addr][tid_list[0]]
+				tid_dict1 = mem_trace[addr][tid_list[1]]
 
 				find_ci_from_thread_pair(tid_dict0, tid_dict1)
 						
 			else:
 				for i in range(l):
-					tid_dict0 = trace_mem[addr][tid_list[i]]
+					tid_dict0 = mem_trace[addr][tid_list[i]]
 					for j in range(i+1,l):
-						tid_dict1 = trace_mem[addr][tid_list[j]]
+						tid_dict1 = mem_trace[addr][tid_list[j]]
 						find_ci_from_thread_pair(tid_dict0, tid_dict1)
 
 
@@ -609,35 +609,29 @@ def find_identifier():
 
 
 
-def show_statics():
-	print "static result=========================================="
-	print "CI num:", len(ci_list)
-	print "result num:", len(result_list)
-	print "group_num:", group_num
-	print "visited addresses num:", len(trace_mem)
 
-	for addr in trace_mem:
-		tid_list = trace_mem[addr]["tid_list"]
-		print "addr: 0x",addr
-		for i in range(len(tid_list)):
-			print "\ttid",tid_list[i],":", len(trace_mem[addr][str(tid_list[i])]["trace_list"]),"access,", "optag:",trace_mem[addr][str(tid_list[i])]["optag"]
-		
+			
 
 
 
 load_mem_traces()
 
-#tool.print_mem_trace(trace_mem)
-
 load_lock_traces()
 
 load_sync_traces()
+
+#tool.print_mem_trace(mem_trace)
+
+tool.print_cs_list(cs_list)
+
+tool.print_sync_list(sync_list)
+
+
 
 find_thread_paris_for_same_addr()
 
 #tool.print_ci_list(ci_list)
 
-#tool.print_cs_list(cs_list)
 
 prune()
 
@@ -645,5 +639,5 @@ prune()
 
 find_identifier()
 
-show_statics()
+tool.show_statistics(mem_trace,cs_list,sync_list,ci_list,result_list,group_num)
 	

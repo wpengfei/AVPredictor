@@ -15,6 +15,10 @@
 #define DEBUG_TRACING 0  //debug mode for tracing run
 #define DEBUG_REPLAY  1  //debug mode for replay run
 
+#define TIMEOUT 100 //threshold for timeout
+
+unsigned int timecounter = 0;
+
 //#define JSON_DLL
 
 //ofstream outFile;

@@ -1,8 +1,8 @@
 
-cd work_dir
 
 
-rm replay/*
+
+rm work_dir/replay/*
 
 #main_bank_lock  2 2
 #main_bank_nolock 2 2
@@ -15,26 +15,30 @@ rm replay/*
 #mozilla  1 1
 
 echo ================================================ monitor run
-#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/monitor.so -- ../test_dir/mysql_169 
-time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/monitor.so -- ../test_dir/RADIX -p 2
-#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/monitor.so -- ../test_cases/pfscan/pfscan -d file ../test_cases/pfscan/pfscan.c
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/mysql_169 
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/RADIX -p 2
+time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -b15qkf test_dir/testfile
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -df testfile.bz2
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/pfscan/pfscan -d file ../test_cases/pfscan/pfscan.c
 
 echo ================================================ prediction 
-time python predictor.py
+time python work_dir/predictor.py
 
 
 
 echo ================================================ relay run
 
-resultdir=$(pwd)/'replay'
+resultdir=$(pwd)/'work_dir/replay'
 
 for curfile in $(ls ${resultdir})
 do
     if test -f ${resultdir}/${curfile}
     then
     	echo ${curfile}
-    	#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/replay.so  -- ~/Desktop/pin_work/test_dir/mysql_169 "replay/"${curfile}
-    	#time ../pin-3.2-81205-gcc-linux/pin -t obj-ia32/replay.so -- ../test_cases/pfscan/pfscan -d file ../test_cases/pfscan/pfscan.c "replay/"${curfile}
+    	time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/replay.so -- test_dir/pbzip2 -b15qkf test_dir/testfile  "work_dir/replay/"${curfile}
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/replay.so -- test_dir/pbzip2 -b15qk -f my.tar "work_dir/replay/"${curfile}
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/replay.so  -- test_dir/mysql_169 "work_dir/replay/"${curfile}
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/replay.so -- .test_cases/pfscan/pfscan -d file ../test_cases/pfscan/pfscan.c "replay/"${curfile}
 
    
     fi

@@ -401,7 +401,7 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 
 	#print "enter grouper\n"
 	if group_num == 0:
-		#group_fhandler = open("replay/group_0.log", "w")
+		#group_fhandler = open("work_dir/replay/group_0.log", "w")
 		#group_fhandler.write(msg_str)
 		#group_fhandler.close()	
 
@@ -472,7 +472,7 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 			group.append(ci)
 			group_set.append(group)
 
-			#file_name = "replay/group_"+str(group_num)+".log"
+			#file_name = "work_dir/replay/group_"+str(group_num)+".log"
 			#group_fhandler = open(file_name, "w")
 			#group_fhandler.write(msg_str)
 			#group_fhandler.close()
@@ -491,7 +491,7 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 			ci["msg"] = msg_str
 			group_set[insert_id].append(ci)
 
-			#file_name = "replay/group_"+str(insert_id)+".log"
+			#file_name = "work_dir/replay/group_"+str(insert_id)+".log"
 			#group_fhandler = open(file_name, "w+")
 			#group_fhandler.write(msg_str)
 			#group_fhandler.close()
@@ -532,7 +532,7 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 
 						k = k + 1
 
-		file_name = "replay/group_"+str(i)+".log"
+		file_name = "work_dir/replay/group_"+str(i)+".log"
 		group_fhandler = open(file_name, "w")				
 		for j in range(l1):
 			group_fhandler.write(sorted_list[j]["msg"])

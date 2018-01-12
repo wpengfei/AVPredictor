@@ -2,6 +2,8 @@
 
 sudo sh -c "echo 0 > /proc/sys/kernel/randomize_va_space"
 
+sudo apt-get install libbz2-dev
+
 2. install jsoncpp
 git clone https://github.com/open-source-parsers/jsoncpp.git
 

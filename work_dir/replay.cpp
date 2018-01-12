@@ -115,11 +115,17 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             return;
         }
         else if((ADDRINT)ip == inter_inst && (ADDRINT)addr == inter_addr && (COUNT)tid == inter_tid){
+            timecounter = 0;
             while(first_ready == false){ 
                 if(DEBUG_REPLAY){              
                     printf("\033[01;33m[2][delay Inter] inst:%x, addr:%x, tid:%u \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
                 }
                 PIN_Sleep(SLEEP_TIME);
+                timecounter++;
+                if (timecounter > TIMEOUT){
+                    printf("\033[01;33m[2][delay Inter] timeout!\033[0m\n");
+                    return;
+                }
             }
             inter_ready = true;
             if(DEBUG_REPLAY){
@@ -138,11 +144,17 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             return;
         }
         else if((ADDRINT)ip == second_inst && (ADDRINT)addr == second_addr && (COUNT)tid == second_tid){
+            timecounter = 0;
             while(inter_ready == false){  
                 if(DEBUG_REPLAY){              
                     printf("\033[01;33m[5][delay Second] inst:%x, addr:%x, tid:%u \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
                 }
                 PIN_Sleep(SLEEP_TIME);
+                timecounter++;
+                if (timecounter > TIMEOUT){
+                    printf("\033[01;33m[2][delay Second] timeout!\033[0m\n");
+                    return;
+                }
             }
             second_ready = true;
             if(DEBUG_REPLAY){
@@ -175,11 +187,17 @@ VOID beforeThreadLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
     
     if(first_ready == false && inter_ready == false && second_ready == false){
         if((COUNT)tid == inter_tid && (ADDRESS)callsite_v == inter_lock){
+            timecounter = 0;
             while(first_ready == false){  
                 if(DEBUG_REPLAY){               
                     printf("\033[01;33m[beforeThreadLock][delay Inter] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
                 }
                 PIN_Sleep(SLEEP_TIME);
+                timecounter++;
+                if (timecounter > TIMEOUT){
+                    printf("\033[01;33m[2][beforeThreadLock][delay Inter] timeout!\033[0m\n");
+                    return;
+                }
             }
             if(DEBUG_REPLAY){
                 printf("\033[01;34m[beforeThreadLock][enter Inter after delay] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
@@ -196,11 +214,17 @@ VOID beforeThreadLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
     }
     else if(first_ready == true && inter_ready == false && second_ready == false){ 
         if((COUNT)tid == second_tid && (ADDRESS)callsite_v == second_lock){
+            timecounter = 0;
             while(inter_ready == false){               
                 if(DEBUG_REPLAY){
                     printf("\033[01;33m[beforeThreadLock][delay Second] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
                 }
                 PIN_Sleep(SLEEP_TIME);
+                timecounter++;
+                if (timecounter > TIMEOUT){
+                    printf("\033[01;33m[2][beforeThreadLock][delay Second] timeout!\033[0m\n");
+                    return;
+                }
             }
             if(DEBUG_REPLAY){
                 printf("\033[01;34m[beforeThreadLock][enter Second after delay] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);

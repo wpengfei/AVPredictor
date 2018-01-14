@@ -12,7 +12,7 @@ VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid)
     if((unsigned int)addr > STACK_LOWERBOUND)
         return;
 
-    PIN_GetLock(&lock,tid+1);
+    //PIN_GetLock(&lock,tid+1);
 
     timestamp++;
 
@@ -27,7 +27,7 @@ VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid)
     }
 
 
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
 }
 
 // Print a memory write record
@@ -37,7 +37,7 @@ VOID RecordMemWrite(VOID * ip, VOID * addr, THREADID tid)
     if((unsigned int)addr > STACK_LOWERBOUND)
         return;
 
-    PIN_GetLock(&lock,tid+1);
+    //PIN_GetLock(&lock,tid+1);
     
     timestamp++;
  
@@ -47,7 +47,7 @@ VOID RecordMemWrite(VOID * ip, VOID * addr, THREADID tid)
 
     }
 
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
 }
 
 
@@ -55,7 +55,7 @@ VOID RecordMemWrite(VOID * ip, VOID * addr, THREADID tid)
 VOID afterThreadCreate(THREADID threadid)
 {
 
-    PIN_GetLock(&lock, threadid+1);
+    //PIN_GetLock(&lock, threadid+1);
     
     logging_start = true;
 
@@ -63,13 +63,13 @@ VOID afterThreadCreate(THREADID threadid)
         printf("\033[01;34m[afterThreadCreate] start logging\033[0m\n");
     }
 
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
     
 }
 
 VOID beforeThreadLock(VOID * ip, THREADID tid,  ADDRINT lock_callsite_v, ADDRINT lock_entry_v)
 {
-    PIN_GetLock(&lock, tid+1);
+    //PIN_GetLock(&lock, tid+1);
     timestamp++;
 
     if(DEBUG_TRACING){
@@ -86,12 +86,12 @@ VOID beforeThreadLock(VOID * ip, THREADID tid,  ADDRINT lock_callsite_v, ADDRINT
 
     //csTable.push_back(cs);
 
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
 }
 
 VOID beforeThreadUnLock(VOID * ip, THREADID tid,  ADDRINT unlock_callsite_v, ADDRINT unlock_entry_v)
 {
-    PIN_GetLock(&lock, tid+1);
+    //PIN_GetLock(&lock, tid+1);
     timestamp++;
     if(DEBUG_TRACING){
         printf("\033[01;33m[ThreadUnLock] T %d Unlocked, time: %d, ip: 0x%x, unlock_callsite_v: 0x%x, unlock_entry_v: 0x%x.\033[0m\n", 
@@ -130,12 +130,12 @@ VOID beforeThreadUnLock(VOID * ip, THREADID tid,  ADDRINT unlock_callsite_v, ADD
     }
 */
   
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
 }
 
 VOID afterThreadBarrier(THREADID tid)
 {
-    PIN_GetLock(&lock, tid+1);
+    //PIN_GetLock(&lock, tid+1);
 
     timestamp++;
 
@@ -148,12 +148,12 @@ VOID afterThreadBarrier(THREADID tid)
     //synch s = {"barrier", threadid, timestamp};
     //synchTable.push_back(s);
 
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
 }
 
 VOID afterThreadCondWait(THREADID tid)
 {
-    PIN_GetLock(&lock, tid+1);
+    //PIN_GetLock(&lock, tid+1);
     timestamp++;
 
     if(DEBUG_TRACING){
@@ -165,12 +165,12 @@ VOID afterThreadCondWait(THREADID tid)
     //synch s = {"condwait", threadid, timestamp};
     //synchTable.push_back(s);
 
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
 }
 
 VOID afterThreadCondTimedwait(THREADID tid)
 {
-    PIN_GetLock(&lock, tid+1);
+    //PIN_GetLock(&lock, tid+1);
     timestamp++;
 
     if(DEBUG_TRACING){
@@ -181,12 +181,12 @@ VOID afterThreadCondTimedwait(THREADID tid)
     //synch s = {"condtimewait", threadid, timestamp};
     //synchTable.push_back(s);
 
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
 }
 
 VOID afterThreadSleep(THREADID tid)
 {
-    PIN_GetLock(&lock, tid+1);
+    //PIN_GetLock(&lock, tid+1);
     timestamp++;
     
     if(DEBUG_TRACING){
@@ -198,7 +198,7 @@ VOID afterThreadSleep(THREADID tid)
     //synch s = {"sleep", threadid, timestamp};
     //synchTable.push_back(s);
 
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
 }
 
 
@@ -237,7 +237,7 @@ VOID Routine(RTN rtn, VOID *v)
     
     string rtn_name = RTN_Name(rtn);
 
-    PIN_GetLock(&lock,PIN_ThreadId()+1);
+    //PIN_GetLock(&lock,PIN_ThreadId()+1);
 
     if(rtn_name=="pthread_create"||rtn_name=="pthread_create"){
         RTN_Open(rtn);
@@ -284,7 +284,7 @@ VOID Routine(RTN rtn, VOID *v)
         RTN_Close(rtn);
     }
 
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
     
 }
 
@@ -293,7 +293,7 @@ VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
 
    
-    PIN_GetLock(&lock, threadid+1);
+    //PIN_GetLock(&lock, threadid+1);
 
     threadNum++;
     threadExisted++;
@@ -306,7 +306,7 @@ VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
             printf("\033[01;34m[ThreadStart] Thread %d created, total number is %d\033[0m\n", threadid, threadNum);
     }
      
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
     
 }
 
@@ -314,7 +314,7 @@ VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
     
-    PIN_GetLock(&lock, threadid+1);
+    //PIN_GetLock(&lock, threadid+1);
     threadNum--;
     if (threadNum > 1)
     {
@@ -331,7 +331,7 @@ VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
         if(DEBUG_TRACING)
             printf("\033[01;34m[ThreadFini] Main Thread joined, total number is %d\033[0m\n", threadNum);
     }
-    PIN_ReleaseLock(&lock);
+    //PIN_ReleaseLock(&lock);
     
 }
 
@@ -360,8 +360,7 @@ INT32 Usage()
     PIN_ERROR( "This Pintool prints a trace of memory addresses\n" 
               + KNOB_BASE::StringKnobSummary() + "\n");
 
-    cerr << "This Pintool counts the number of times a routine is executed" << endl;
-    cerr << "and the number of instructions executed in a routine" << endl;
+    cerr << "This Pintool monitors the program traces." << endl;
     cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
     return -1;
 }

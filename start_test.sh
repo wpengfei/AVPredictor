@@ -13,7 +13,7 @@ rm work_dir/groupset/*
 
 
 echo ================================================ monitor run
-time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock 
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock 
 
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/RADIX -p 2
 
@@ -22,6 +22,9 @@ time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/mai
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -df file test_dir/testfile.bz2
 
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pfscan -d file test_dir/testfile
+
+time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png
+
 
 echo ================================================ prediction 
 
@@ -39,13 +42,16 @@ do
     if test -f ${resultdir}/${curfile}
     then
     	echo ${curfile}
-    	time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock "work_dir/groupset/"${curfile}
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock "work_dir/groupset/"${curfile}
 
     	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -b15qkf test_dir/testfile  "work_dir/groupset/"${curfile}
     	
     	
     	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pfscan -d file test_dir/testfile "work_dir/groupset/"${curfile}
+
+		time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png "work_dir/groupset/"${curfile}
    
+
     fi
 done
 

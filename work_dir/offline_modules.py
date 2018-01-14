@@ -10,27 +10,33 @@ result_list = []
 group_num = 0
 group_set = []
 
-def load_sync_traces():
-	file_sync_handler = open("file_sync.log", "r")
+DISTANCE = 200 #threshold to decide whether the "inter" is related to a access pair (First, Second)
+
+path_sync = "trace_sync.log"
+path_lock = "trace_lock.log"
+path_mem = "trace_mem.log"
+
+def load_sync_traces(path_sync):
+	file_sync_handler = open(path_sync, "r")
 	each_line = True
 	while each_line:
 		each_line = file_sync_handler.readline()
 
 		if each_line:
-			tid, time, ty = scanf.sscanf(each_line,"tid:%d,time:%d,type:%s\n")
+			tid, time, ty = scanf.sscanf(each_line,"tid:%d,time:%d,type:%c\n")
 
 			sync = {}
 			sync["tid"] = tid
-			sync["type"] = ty
 			sync["time"] = time
+			sync["type"] = ty # 'b': barriar, 'w': Condwait, 't': CondTimewait, 's': sleep
 			sync_list.append(sync)
 
 	file_sync_handler.close()
 
 
 
-def load_lock_traces():
-	file_lock_handler = open("file_lock.log", "r")
+def load_lock_traces(path_lock):
+	file_lock_handler = open(path_lock, "r")
 	each_line = True
 	while each_line:
 		each_line = file_lock_handler.readline()
@@ -82,8 +88,8 @@ tlist = [trace1, trace2]
 '''
 
 
-def load_mem_traces():
-	file_mem_handler = open("file_mem_access.log", "r")
+def load_mem_traces(path_mem):
+	file_mem_handler = open(path_mem, "r")
 	each_line = True
 	while each_line:
 		each_line = file_mem_handler.readline()
@@ -91,7 +97,11 @@ def load_mem_traces():
 
 		if each_line:
 			
-			tid, op, time, ip, addr, rtn = scanf.sscanf(each_line,"tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n")	
+			tid, op, time, ip, addr = scanf.sscanf(each_line,"tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n")
+
+			#if (not tid) or	(not op) or (not time) or (not ip) or (not addr):
+			#	print "Broken line,", tid, op, time, ip, addr
+			#	continue
 			
 			ip = str(hex(ip))
 			addr = str(hex(addr))
@@ -102,7 +112,7 @@ def load_mem_traces():
 			trace["time"] = time
 			trace["ip"] = ip
 			trace["addr"] = addr
-			trace["rtn"] = rtn
+			#trace["rtn"] = rtn
 
 			if  mem_trace.has_key(addr):
 
@@ -163,26 +173,36 @@ def find_write_trace(tlist,time1,time2):
 	assert time1 < time2
 	ret = []
 	for it in tlist:
-		if it["time"] > time1 and it["time"] < time2:
+		if it["op"] == 'R':
+			continue
+		elif it["time"] > time1 and it["time"] < time2:
+			continue
+		elif it["time"] - time2 > DISTANCE or time1 - it["time"] > DISTANCE:
 			continue
 		else:
-			if it["op"] == "W" :
-				ret.append(it)
+			ret.append(it)
+
 	return ret
 
 def find_read_trace(tlist,time1,time2):
 	assert time1 < time2
 	ret = []
 	for it in tlist:
-		if it["time"] > time1 and it["time"] < time2:
+		if it["op"] == 'W':
+			continue
+		elif it["time"] > time1 and it["time"] < time2:
+			continue
+		elif it["time"] - time2 > DISTANCE or time1 - it["time"] > DISTANCE:
 			continue
 		else:
-			if it["op"] == "R" :
-				ret.append(it)
+			ret.append(it)
+
 	return ret
 
-# a "tid_dict" contains the memory traces that accessing the same addr from the same thread
+
+
 def find_ci_from_thread_pair(tid_dict0, tid_dict1):
+	# a "tid_dict" contains the memory traces that accessing the same addr from the same thread
 	if tid_dict0["optag"] == 0 and tid_dict1["optag"] == 0:
 		return None
 	elif tid_dict0["optag"] == 1 and tid_dict1["optag"] == 1:
@@ -195,85 +215,101 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 		l0 = len(tlist0)
 		l1 = len(tlist1)
 
+		if l0 + l1 <= 2: # at least three accesses to for a CI
+			return None
+
 		if l0 >= 2:
 			for i in range(l0-1):
 				# first and second in a CI must not be interleaved by an access from the same thread
-				# aka. first and second must be close to each other in the list
-				if tlist0[i]["op"] == "R" and tlist0[i+1]["op"] == "R":
-					ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
-					for it in ret_list:
-						ci = {}
-						ci["first"] = tlist0[i]
-						ci["second"] = tlist0[i+1]
-						ci["inter"] = it
-						ci_list.append(ci)
+				# aka. first and second must be next to each other in the list
+				# besides, the occurrences should not beyond a DISTANCE
+				if tlist0[i+1]["time"] - tlist0[i]["time"] > DISTANCE:
+					continue
 
-				elif tlist0[i]["op"] == "W" and tlist0[i+1]["op"] == "R":
-					ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
-					for it in ret_list:
-						ci = {}
-						ci["first"] = tlist0[i]
-						ci["second"] = tlist0[i+1]
-						ci["inter"] = it
-						ci_list.append(ci)
-				elif tlist0[i]["op"] == "R" and tlist0[i+1]["op"] == "W":
-					ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
-					for it in ret_list:
-						ci = {}
-						ci["first"] = tlist0[i]
-						ci["second"] = tlist0[i+1]
-						ci["inter"] = it
-						ci_list.append(ci)
-				elif tlist0[i]["op"] == "W" and tlist0[i+1]["op"] == "W":
-					ret_list = find_read_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
-					for it in ret_list:
-						ci = {}
-						ci["first"] = tlist0[i]
-						ci["second"] = tlist0[i+1]
-						ci["inter"] = it
-						ci_list.append(ci)
+				if tlist0[i]["op"] == "R":
+					if tlist0[i+1]["op"] == "R":
+						ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
+						for it in ret_list:
+							ci = {}
+							ci["first"] = tlist0[i]
+							ci["second"] = tlist0[i+1]
+							ci["inter"] = it
+							ci_list.append(ci)
+					elif tlist0[i+1]["op"] == "W":
+						ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
+						for it in ret_list:
+							ci = {}
+							ci["first"] = tlist0[i]
+							ci["second"] = tlist0[i+1]
+							ci["inter"] = it
+							ci_list.append(ci)
+
+				elif tlist0[i]["op"] == "W":
+					if tlist0[i+1]["op"] == "R":
+						ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
+						for it in ret_list:
+							ci = {}
+							ci["first"] = tlist0[i]
+							ci["second"] = tlist0[i+1]
+							ci["inter"] = it
+							ci_list.append(ci)
+				
+					elif tlist0[i+1]["op"] == "W":
+						ret_list = find_read_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
+						for it in ret_list:
+							ci = {}
+							ci["first"] = tlist0[i]
+							ci["second"] = tlist0[i+1]
+							ci["inter"] = it
+							ci_list.append(ci)
 
 		if l1 >= 2:
 			for i in range(l1-1): # switch tlist0 and tlist 1
+
+				if tlist1[i+1]["time"] - tlist1[i]["time"] > DISTANCE: #abandon the unlikely cases
+					continue
 			
-				if tlist1[i]["op"] == "R" and tlist1[i+1]["op"] == "R":
-					ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
-					for it in ret_list:
-						ci = {}
-						ci["first"] = tlist1[i]
-						ci["second"] = tlist1[i+1]
-						ci["inter"] = it
-						ci_list.append(ci)
+				if tlist1[i]["op"] == "R":
+					if tlist1[i+1]["op"] == "R":
+						ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
+						for it in ret_list:
+							ci = {}
+							ci["first"] = tlist1[i]
+							ci["second"] = tlist1[i+1]
+							ci["inter"] = it
+							ci_list.append(ci)
 
-				elif tlist1[i]["op"] == "W" and tlist1[i+1]["op"] == "R":
-					ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
-					for it in ret_list:
-						ci = {}
-						ci["first"] = tlist1[i]
-						ci["second"] = tlist1[i+1]
-						ci["inter"] = it
-						ci_list.append(ci)
-				elif tlist1[i]["op"] == "R" and tlist1[i+1]["op"] == "W":
-					ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
-					for it in ret_list:
-						ci = {}
-						ci["first"] = tlist1[i]
-						ci["second"] = tlist1[i+1]
-						ci["inter"] = it
-						ci_list.append(ci)
-				elif tlist1[i]["op"] == "W" and tlist1[i+1]["op"] == "W":
-					ret_list = find_read_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
-					for it in ret_list:
-						ci = {}
-						ci["first"] = tlist1[i]
-						ci["second"] = tlist1[i+1]
-						ci["inter"] = it
-						ci_list.append(ci)
+					elif tlist1[i+1]["op"] == "W":
+						ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
+						for it in ret_list:
+							ci = {}
+							ci["first"] = tlist1[i]
+							ci["second"] = tlist1[i+1]
+							ci["inter"] = it
+							ci_list.append(ci)
+
+				elif tlist1[i]["op"] == "W":
+					if tlist1[i+1]["op"] == "R":
+						ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
+						for it in ret_list:
+							ci = {}
+							ci["first"] = tlist1[i]
+							ci["second"] = tlist1[i+1]
+							ci["inter"] = it
+							ci_list.append(ci)
+					elif tlist1[i+1]["op"] == "W":
+						ret_list = find_read_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
+						for it in ret_list:
+							ci = {}
+							ci["first"] = tlist1[i]
+							ci["second"] = tlist1[i+1]
+							ci["inter"] = it
+							ci_list.append(ci)
 
 
 
-def find_thread_paris_for_same_addr():
-
+def predictor():
+	# start by finding thread paris for the same addr
 	for addr in mem_trace:
 		if mem_trace[addr]["thread_num"] < 2:
 			#print "thread num < 2"
@@ -286,19 +322,19 @@ def find_thread_paris_for_same_addr():
 				tid_dict0 = mem_trace[addr][tid_list[0]]
 				tid_dict1 = mem_trace[addr][tid_list[1]]
 
-				find_ci_from_thread_pair(tid_dict0, tid_dict1)
+				find_ci_from_thread_pair(tid_dict0, tid_dict1) #directed pairs
 						
 			else:
 				for i in range(l):
 					tid_dict0 = mem_trace[addr][tid_list[i]]
 					for j in range(i+1,l):
 						tid_dict1 = mem_trace[addr][tid_list[j]]
-						find_ci_from_thread_pair(tid_dict0, tid_dict1)
+						find_ci_from_thread_pair(tid_dict0, tid_dict1) #directed pairs
 
 
 
-def prune():
-
+def pruner():
+	# remove the infesible cases from the ci_list
 	for ci in ci_list:
 		first = ci["first"]
 		second = ci["second"]
@@ -306,8 +342,9 @@ def prune():
 
 		assert first["tid"] == second["tid"]
 
-		#if first["time"] + 1 == second["time"]: 
-			#continue
+		# remove the cases that firsr and Second are next to each other, mainly in the main thread
+		if first["time"] + 1 == second["time"]: 
+			continue
 
 		# check for locks
 		found = False #not same critical section
@@ -532,7 +569,7 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 
 						k = k + 1
 
-		file_name = "work_dir/replay/group_"+str(i)+".log"
+		file_name = "groupset/group_"+str(i)+".log"
 		group_fhandler = open(file_name, "w")				
 		for j in range(l1):
 			group_fhandler.write(sorted_list[j]["msg"])
@@ -614,11 +651,11 @@ def find_identifier():
 
 
 
-load_mem_traces()
+load_mem_traces(path_mem)
 
-load_lock_traces()
+load_lock_traces(path_lock)
 
-load_sync_traces()
+load_sync_traces(path_sync)
 
 #tool.print_mem_trace(mem_trace)
 
@@ -628,16 +665,17 @@ tool.print_sync_list(sync_list)
 
 
 
-find_thread_paris_for_same_addr()
+predictor()
 
 #tool.print_ci_list(ci_list)
 
 
-prune()
+pruner()
 
 #tool.print_result_list(result_list)
 
 find_identifier()
+
 
 tool.show_statistics(mem_trace,cs_list,sync_list,ci_list,result_list,group_num)
 	

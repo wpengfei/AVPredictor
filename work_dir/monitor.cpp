@@ -6,7 +6,8 @@
 
 
 // Print a memory read record
-VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName)
+//VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName)
+VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid)
 {
     if((unsigned int)addr > STACK_LOWERBOUND)
         return;
@@ -20,15 +21,18 @@ VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName)
 
  	if (logging_start){
 
-	    fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
-	}
+	   //fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
+	   fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr);
+    
+    }
 
 
     PIN_ReleaseLock(&lock);
 }
 
 // Print a memory write record
-VOID RecordMemWrite(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName)
+//VOID RecordMemWrite(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName)
+VOID RecordMemWrite(VOID * ip, VOID * addr, THREADID tid)
 {
     if((unsigned int)addr > STACK_LOWERBOUND)
         return;
@@ -38,7 +42,9 @@ VOID RecordMemWrite(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName)
     timestamp++;
  
     if (logging_start){
-    	fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
+    	//fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
+        fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr);
+
     }
 
     PIN_ReleaseLock(&lock);
@@ -137,7 +143,7 @@ VOID afterThreadBarrier(THREADID tid)
         printf("\033[01;33m[ThreadBarrier] T %d Barrier, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    fprintf(file_sync, "tid:%d,time:%d,type:%s\n", tid, timestamp, "barrier");
+    fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, timestamp, 'b');
 
     //synch s = {"barrier", threadid, timestamp};
     //synchTable.push_back(s);
@@ -154,7 +160,7 @@ VOID afterThreadCondWait(THREADID tid)
         printf("\033[01;33m[ThreadCondWait] T %d Condwait, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    fprintf(file_sync, "tid:%d,time:%d,type:%s\n", tid, timestamp, "condwait");
+    fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, timestamp, 'w');
 
     //synch s = {"condwait", threadid, timestamp};
     //synchTable.push_back(s);
@@ -171,7 +177,7 @@ VOID afterThreadCondTimedwait(THREADID tid)
         printf("\033[01;33m[ThreadCondTimedwait] T %d CondTimewait, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    fprintf(file_sync, "tid:%d,time:%d,type:%s\n", tid, tid, "condtimewait");
+    fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, tid, 't');
     //synch s = {"condtimewait", threadid, timestamp};
     //synchTable.push_back(s);
 
@@ -187,7 +193,7 @@ VOID afterThreadSleep(THREADID tid)
         printf("\033[01;33m[ThreadSleep] T %d sleep, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    fprintf(file_sync, "tid:%d,time:%d,type:%s\n", tid, tid, "sleep");
+    fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, tid, 's');
 
     //synch s = {"sleep", threadid, timestamp};
     //synchTable.push_back(s);
@@ -213,13 +219,13 @@ VOID Instruction(INS ins, VOID *v)
 
     if (INS_IsMemoryRead(ins)){
         INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)RecordMemRead, IARG_INST_PTR, IARG_MEMORYREAD_EA, 
-          IARG_THREAD_ID, IARG_PTR, (VOID*)RTN_Name(rtn).c_str(), IARG_END);
+          IARG_THREAD_ID, IARG_END);
     }
 
     
     if(INS_IsMemoryWrite(ins)){
         INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)RecordMemWrite,IARG_INST_PTR,IARG_MEMORYWRITE_EA, 
-          IARG_THREAD_ID, IARG_PTR, (VOID*)RTN_Name(rtn).c_str(), IARG_END);
+          IARG_THREAD_ID, IARG_END);
     }
 
 }
@@ -371,9 +377,9 @@ int main(int argc, char * argv[])
     // Initialize symbol table code, needed for rtn instrumentation
     PIN_InitSymbols();
 
-    file_mem_access = fopen("file_mem_access.log", "w");
-	file_lock = fopen("file_lock.log", "w");
-	file_sync = fopen("file_sync.log", "w");
+    file_mem_access = fopen("work_dir/trace_mem.log", "w");
+	file_lock = fopen("work_dir/trace_lock.log", "w");
+	file_sync = fopen("work_dir/trace_sync.log", "w");
 
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();

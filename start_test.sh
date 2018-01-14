@@ -1,8 +1,5 @@
 
-
-
-
-rm work_dir/replay/*
+rm work_dir/groupset/*
 
 #main_bank_lock  2 2
 #main_bank_nolock 2 2
@@ -14,32 +11,40 @@ rm work_dir/replay/*
 #mysql_4012  1 1
 #mozilla  1 1
 
+
 echo ================================================ monitor run
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/mysql_169 
+time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock 
+
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/RADIX -p 2
-time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -b15qkf test_dir/testfile
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -df testfile.bz2
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/pfscan/pfscan -d file ../test_cases/pfscan/pfscan.c
+
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -b15qkf test_dir/testfile
+
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -df file test_dir/testfile.bz2
+
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pfscan -d file test_dir/testfile
 
 echo ================================================ prediction 
-time python work_dir/predictor.py
 
+cd work_dir
+time python offline_modules.py
+cd ..
 
 
 echo ================================================ relay run
 
-resultdir=$(pwd)/'work_dir/replay'
+resultdir=$(pwd)/'work_dir/groupset'
 
 for curfile in $(ls ${resultdir})
 do
     if test -f ${resultdir}/${curfile}
     then
     	echo ${curfile}
-    	time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/replay.so -- test_dir/pbzip2 -b15qkf test_dir/testfile  "work_dir/replay/"${curfile}
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/replay.so -- test_dir/pbzip2 -b15qk -f my.tar "work_dir/replay/"${curfile}
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/replay.so  -- test_dir/mysql_169 "work_dir/replay/"${curfile}
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/replay.so -- .test_cases/pfscan/pfscan -d file ../test_cases/pfscan/pfscan.c "replay/"${curfile}
+    	time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock "work_dir/groupset/"${curfile}
 
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -b15qkf test_dir/testfile  "work_dir/groupset/"${curfile}
+    	
+    	
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pfscan -d file test_dir/testfile "work_dir/groupset/"${curfile}
    
     fi
 done

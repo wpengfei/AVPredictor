@@ -51,16 +51,16 @@ def show_statistics(mem_trace,cs_list,sync_list,ci_list,result_list,group_num):
 	total_access = 0
 	for addr in mem_trace:
 		tid_list = mem_trace[addr]["tid_list"]
-		print "addr:",addr
+		#print "addr:",addr
 		for i in range(len(tid_list)):
 			total_access = total_access + len(mem_trace[addr][str(tid_list[i])]["trace_list"])
-			print "\ttid:",tid_list[i],", count:",len(mem_trace[addr][str(tid_list[i])]["trace_list"]), ", optag:",mem_trace[addr][str(tid_list[i])]["optag"]
+			#print "\ttid:",tid_list[i],", count:",len(mem_trace[addr][str(tid_list[i])]["trace_list"]), ", optag:",mem_trace[addr][str(tid_list[i])]["optag"]
 
 
 	print "total accesses:",total_access
 	print "visited addresses num:", len(mem_trace)
-	print "cs list length:", len(cs_list)
-	print "sync list length:", len(sync_list)
+	#print "cs list length:", len(cs_list)
+	#print "sync list length:", len(sync_list)
 	print "total CI num:", len(ci_list)
 	print "result CI num after prunning:", len(result_list)
 	print "group num:", group_num

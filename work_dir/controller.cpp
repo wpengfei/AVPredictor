@@ -53,9 +53,17 @@ bool second_ready = false;
 
 int load_next_ci(){
 
+    first_ready = false;
+    inter_ready = false;
+    second_ready = false;
 
     if(cur_ci + 1 ==  max_size)
         return 0;
+
+    if(cur_ci >= ci_count)
+        return 0;
+
+    
 
     printf("========================Load CI %d ==========================\n", cur_ci);
     
@@ -112,7 +120,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             if(DEBUG_REPLAY){
                 printf("\033[01;34m[1][execute First] inst:%x, addr:%x, tid:%u \033[0m\n",(ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
             }
-            return;
+            return; //return early to imporve efficiency
         }
         else if((ADDRINT)ip == inter_inst && (ADDRINT)addr == inter_addr && (COUNT)tid == inter_tid){
             timecounter = 0;
@@ -124,7 +132,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
                 timecounter++;
                 if (timecounter > TIMEOUT){
                     printf("\033[01;33m[2][delay Inter] timeout!\033[0m\n");
-                    return;
+                    exit(0);
                 }
             }
             inter_ready = true;
@@ -133,8 +141,10 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             }
             return;
         }
+        
 
     }
+    
     else if(first_ready == true && inter_ready == false && second_ready == false){ 
         if((ADDRINT)ip == inter_inst && (ADDRINT)addr == inter_addr && (COUNT)tid == inter_tid){
             inter_ready = true;
@@ -153,7 +163,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
                 timecounter++;
                 if (timecounter > TIMEOUT){
                     printf("\033[01;33m[2][delay Second] timeout!\033[0m\n");
-                    return;
+                    exit(0);
                 }
             }
             second_ready = true;
@@ -162,6 +172,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             }
             return;
         }
+        
 
     }
     else if(first_ready == true && inter_ready == true && second_ready == false){ 
@@ -170,10 +181,19 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             if(DEBUG_REPLAY){
                 printf("\033[01;34m[5][execute Second] inst:%x, addr:%x, tid:%u \033[0m\n",(ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
             }
-            load_next_ci();
             return;
         }
+        
     }
+    else if(first_ready == true && inter_ready == true && second_ready == true){ 
+        if(DEBUG_REPLAY){
+            printf("\033[01;34m[5][load next ci] \033[0m\n");
+        }
+        load_next_ci();
+        return;
+    }
+    else
+        assert(false);
 }
 
 
@@ -196,7 +216,7 @@ VOID beforeThreadLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
                 timecounter++;
                 if (timecounter > TIMEOUT){
                     printf("\033[01;33m[2][beforeThreadLock][delay Inter] timeout!\033[0m\n");
-                    return;
+                    exit(0);
                 }
             }
             if(DEBUG_REPLAY){
@@ -223,7 +243,7 @@ VOID beforeThreadLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
                 timecounter++;
                 if (timecounter > TIMEOUT){
                     printf("\033[01;33m[2][beforeThreadLock][delay Second] timeout!\033[0m\n");
-                    return;
+                    exit(0);
                 }
             }
             if(DEBUG_REPLAY){
@@ -249,6 +269,7 @@ VOID beforeThreadLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
         }
         
     }
+  
 
     //PIN_ReleaseLock(&lock);
 }
@@ -285,12 +306,16 @@ VOID beforeThreadUnLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
             if(DEBUG_REPLAY){
                 printf("\033[01;34m[beforeThreadUnLock][executed Second] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
             }
-            load_next_ci();
             return;
         }
         
     }
-  
+    else if(first_ready == true && inter_ready == true && second_ready == true){ 
+        if(DEBUG_REPLAY){
+            printf("\033[01;34m[load next ci]\033[0m\n");
+        }
+        load_next_ci();
+    }
     //PIN_ReleaseLock(&lock);
 }
 
@@ -403,6 +428,7 @@ int main(int argc, char * argv[])
         return 0;
     }
     
+
     ci_count = 0;
     while (ci_count < max_size){
         if((fscanf(replay_log,"%u[%u]%x,%x; [%u]%x,%x; [%u]%x,%x\n",

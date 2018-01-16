@@ -10,7 +10,7 @@ result_list = []
 group_num = 0
 group_set = []
 
-DISTANCE = 200 #threshold to decide whether the "inter" is related to a access pair (First, Second)
+DISTANCE = 100000 #threshold to decide whether the "inter" is related to a access pair (First, Second)
 
 path_sync = "trace_sync.log"
 path_lock = "trace_lock.log"
@@ -343,8 +343,8 @@ def pruner():
 		assert first["tid"] == second["tid"]
 
 		# remove the cases that firsr and Second are next to each other, mainly in the main thread
-		if first["time"] + 1 == second["time"]: 
-			continue
+		#if first["time"] + 1 == second["time"]: 
+		#	continue
 
 		# check for locks
 		found = False #not same critical section
@@ -462,6 +462,7 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 
 		for i in range(group_num):
 			l = len(group_set[i])
+
 			interfere = False
 			for j in range(l): # check every ci in the group for interference
 				f_interval = group_set[i][j]["first_interval"]
@@ -487,19 +488,21 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 					interfere = False
 
 				else: #interfere
-
-					interfere = True	
+					interfere = True
+					break	
 
 			if not interfere: # collect the id and size of the group that can be inserted
 				if insert_id == -1:
 					insert_id = i
 					insert_group_size = l
 
-				elif l < insert_group_size:
-					insert_id = i
-					insert_group_size = l
+				else:
+					if l < insert_group_size: # find the smallest one
+						insert_id = i
+						insert_group_size = l
+				
 
-		if insert_id == -1: # did not find an appropriate group, start a new group
+		if insert_id == -1 : # did not find an appropriate group, start a new group
 			ci = {}
 			ci["first_interval"] = first_interval
 			ci["second_interval"] = second_interval
@@ -553,6 +556,7 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 					sorted_list.insert(0, origin_list[j])
 				else:
 					sorted_list.append(origin_list[j])
+				#print "--1--",sorted_list
 			else:
 				l2 = len(sorted_list)
 				if origin_list[j]["first_interval"][0] < sorted_list[0]["first_interval"][0]:
@@ -563,15 +567,21 @@ def grouper(first_interval, second_interval, inter_interval, msg_str):
 					k = 0
 					while k+1 < l2: 
 						if origin_list[j]["first_interval"][0] > sorted_list[k]["first_interval"][0] and \
-						origin_list[j]["first_interval"][0] < sorted_list[k+1]["first_interval"][0]:
-
+							origin_list[j]["first_interval"][0] < sorted_list[k+1]["first_interval"][0]:
 							sorted_list.insert(k+1, origin_list[j])
+							break
 
 						k = k + 1
+				#print "--2--",sorted_list
+
+		#print "l1 =",l1,"sorted_list =", len(sorted_list)
+		#print "origin",origin_list
+		#print "sorted",sorted_list
+		assert l1 == len(sorted_list)
 
 		file_name = "groupset/group_"+str(i)+".log"
 		group_fhandler = open(file_name, "w")				
-		for j in range(l1):
+		for j in range(len(sorted_list)):
 			group_fhandler.write(sorted_list[j]["msg"])
 		group_fhandler.close()
 
@@ -659,9 +669,9 @@ load_sync_traces(path_sync)
 
 #tool.print_mem_trace(mem_trace)
 
-tool.print_cs_list(cs_list)
+#tool.print_cs_list(cs_list)
 
-tool.print_sync_list(sync_list)
+#tool.print_sync_list(sync_list)
 
 
 

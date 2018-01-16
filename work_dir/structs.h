@@ -13,7 +13,7 @@
 #define MAX_THREAD_NUM 10
 
 #define DEBUG_TRACING 0  //debug mode for tracing run
-#define DEBUG_REPLAY  1  //debug mode for replay run
+#define DEBUG_REPLAY  0  //debug mode for replay run
 
 #define TIMEOUT 100 //threshold for timeout
 

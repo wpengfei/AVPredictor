@@ -16,9 +16,6 @@ VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid)
 
     timestamp++;
 
-
-    //memAccess ma={'R',(ADDRINT)ip, (ADDRINT)addr, tid, timestamp, string((char*)rtnName), 0, 0, 0};
-
  	if (logging_start){
 
 	   //fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
@@ -82,9 +79,6 @@ VOID beforeThreadLock(VOID * ip, THREADID tid,  ADDRINT lock_callsite_v, ADDRINT
 
 
 
-    //criticalSection cs = {threadid, lock_callsite_v, 0, lock_entry_v, 0, timestamp, 0}; //use 0 by default when a critical section is not finished
-
-    //csTable.push_back(cs);
 
     //PIN_ReleaseLock(&lock);
 }
@@ -101,34 +95,6 @@ VOID beforeThreadUnLock(VOID * ip, THREADID tid,  ADDRINT unlock_callsite_v, ADD
     fprintf(file_lock, "tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x\n", 
     		tid, 'U', timestamp, (unsigned int)unlock_callsite_v, (unsigned int)unlock_entry_v);
 
-/*
-    unsigned int i;
-    bool matched = false;
-    assert(csTable.size()>0);
-    //printf("cstablesize: %d\n",csTable.size());
-    if (csTable.size() == 1){
-        if(csTable[i].tid == threadid && csTable[i].unlock_callsite_v == 0 && csTable[i].ft == 0){
-            csTable[i].ft = timestamp;//finish the critical section
-            csTable[i].unlock_callsite_v = unlock_callsite_v;
-            csTable[i].unlock_entry_v = unlock_entry_v;
-        }
-    }
-    else if (csTable.size() > 1){
-        for (i = csTable.size()-1; i >= 0; i--){ //critical sections can be embedded, should be processed like a stack, from back to front
-            if(csTable[i].tid == threadid && csTable[i].unlock_callsite_v == 0 && csTable[i].ft == 0){
-                csTable[i].ft = timestamp;//finish the critical section
-                csTable[i].unlock_callsite_v = unlock_callsite_v;
-                csTable[i].unlock_entry_v = unlock_entry_v;
-                matched = true;
-                break;
-            }
-        }
-        assert(matched);//should always matched.
-    }
-    else{
-        assert(0); // should always >= 1
-    }
-*/
   
     //PIN_ReleaseLock(&lock);
 }
@@ -202,7 +168,6 @@ VOID afterThreadSleep(THREADID tid)
 }
 
 
-//--------------------------------------------------------------------------------------------------------------
 // Is called for every instruction and instruments reads and writes
 VOID Instruction(INS ins, VOID *v)
 {
@@ -338,12 +303,9 @@ VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
 // This function is called when the application exits
 VOID Fini(INT32 code, VOID *v)
 {
-	//unsigned int i = 0;
-    //unsigned int j = 0;
 
 
-
-    //fprintf(file_mem_access, "#eof\n");
+    fclose(file_mem_access);
     fclose(file_lock);
     fclose(file_sync);
 

@@ -6,8 +6,10 @@ rm obj-ia32/monitor.so
 rm obj-ia32/monitor.o
 rm obj-ia32/controller.so
 rm obj-ia32/controller.o
+rm obj-ia32/pinbase.so
+rm obj-ia32/pinbase.o
 
-
+make PIN_ROOT=../pin-3.2-81205-gcc-linux/  obj-ia32/pinbase.so 
 make PIN_ROOT=../pin-3.2-81205-gcc-linux/  obj-ia32/monitor.so 
 make PIN_ROOT=../pin-3.2-81205-gcc-linux/  obj-ia32/controller.so
 

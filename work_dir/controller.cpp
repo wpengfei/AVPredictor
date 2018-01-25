@@ -4,6 +4,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <string.h>
+#include <sstream>
 
 #define SLEEP_TIME 5
 
@@ -118,7 +119,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
         if((ADDRINT)ip == first_inst && (ADDRINT)addr == first_addr && (COUNT)tid == first_tid){
             first_ready = true;
             if(DEBUG_REPLAY){
-                printf("\033[01;34m[1][execute First] inst:%x, addr:%x, tid:%u \033[0m\n",(ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
+                printf("\033[01;34m[1][execute First] inst:%x, addr:%x, tid:%u, rtn:%s\033[0m\n",(ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
             }
             return; //return early to imporve efficiency
         }
@@ -126,7 +127,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             timecounter = 0;
             while(first_ready == false){ 
                 if(DEBUG_REPLAY){              
-                    printf("\033[01;33m[2][delay Inter] inst:%x, addr:%x, tid:%u \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
+                    printf("\033[01;33m[2][delay Inter] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
                 }
                 PIN_Sleep(SLEEP_TIME);
                 timecounter++;
@@ -137,7 +138,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             }
             inter_ready = true;
             if(DEBUG_REPLAY){
-                printf("\033[01;34m[3][execute Inter after delay] inst:%x, addr:%x, tid:%u \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
+                printf("\033[01;34m[3][execute Inter after delay] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
             }
             return;
         }
@@ -149,7 +150,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
         if((ADDRINT)ip == inter_inst && (ADDRINT)addr == inter_addr && (COUNT)tid == inter_tid){
             inter_ready = true;
             if(DEBUG_REPLAY){
-                printf("\033[01;34m[4][execute Inter] inst:%x, addr:%x, tid:%u \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
+                printf("\033[01;34m[4][execute Inter] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
             }
             return;
         }
@@ -157,7 +158,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             timecounter = 0;
             while(inter_ready == false){  
                 if(DEBUG_REPLAY){              
-                    printf("\033[01;33m[5][delay Second] inst:%x, addr:%x, tid:%u \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
+                    printf("\033[01;33m[5][delay Second] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
                 }
                 PIN_Sleep(SLEEP_TIME);
                 timecounter++;
@@ -168,7 +169,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
             }
             second_ready = true;
             if(DEBUG_REPLAY){
-                printf("\033[01;34m[6][execute Second after delay] inst:%x, addr:%x, tid:%u \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
+                printf("\033[01;34m[6][execute Second after delay] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
             }
             return;
         }
@@ -179,7 +180,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
         if((ADDRINT)ip == second_inst && (ADDRINT)addr == second_addr && (COUNT)tid == second_tid){
             second_ready = true;
             if(DEBUG_REPLAY){
-                printf("\033[01;34m[5][execute Second] inst:%x, addr:%x, tid:%u \033[0m\n",(ADDRINT)ip,(ADDRINT)addr,(COUNT)tid);
+                printf("\033[01;34m[5][execute Second] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n",(ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
             }
             return;
         }
@@ -420,14 +421,51 @@ int main(int argc, char * argv[])
     printf("=========================\n");
     for (unsigned int j = 0; j < (unsigned int)argc; j++)    
         printf("argv[%d] = %s\n", j, argv[j]);
-    */
+    
 
     replay_log = fopen(argv[argc-1], "r"); //argv[7] is the file of the groupd results
     if (!replay_log){
         printf("Open file %s failed!\n", argv[7]);
         return 0;
     }
-    
+    */
+
+    FILE * counter;
+    int c;
+    counter = fopen("work_dir/groupset/counter.log","r");
+    if (!counter){
+        replay_log = fopen("work_dir/groupset/group_0.log", "r");
+        counter = fopen("work_dir/groupset/counter.log","w");
+        fprintf(counter,"%d",1); // first time to read, pointer to  group_1 
+        fclose(counter);
+    }
+    else{
+        counter = fopen("work_dir/groupset/counter.log","r");
+        fscanf(counter,"%d", &c);
+        fclose(counter);
+
+        counter = fopen("work_dir/groupset/counter.log","w");
+        c++;
+        fprintf(counter,"%d",c);
+        fclose(counter);
+
+        // point counter to the next group
+        std::string s1 = "work_dir/groupset/group_";
+        std::string s2 = ".log";
+
+        std::ostringstream oss;
+        oss << c;
+        std::string s0 = oss.str();
+
+        std:: string s = s1+s0+s2;
+
+        std::cout<<s<<endl;
+        replay_log = fopen(s.c_str(), "r");
+
+        
+    }
+
+
 
     ci_count = 0;
     while (ci_count < max_size){

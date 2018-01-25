@@ -16,18 +16,19 @@ rm work_dir/groupset/*
 #RADIX
 
 echo ================================================ monitor run
-time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/mysql_169 
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
 
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/FFT -p 2
 
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -b15qkf test_dir/testfile
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -b15kf test_dir/testfile
 
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -dfk test_dir/testfile.bz2 
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -dfk test_dir/testfile1.bz2 
 
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pfscan -dlv file test_dir/testfile
 
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png
 
+time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so /usr/local/apache2/bin/ab -n 100 -c 2 http://localhost/index.php
 
 echo ================================================ prediction 
 
@@ -44,18 +45,22 @@ for curfile in $(ls ${resultdir})
 do
     if test -f ${resultdir}/${curfile}
     then
-    	echo ${curfile}
-    	time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/mysql_169 "work_dir/groupset/"${curfile}
+    	#echo ${curfile} #"work_dir/groupset/"${curfile}
 
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/FFT -p 2  "work_dir/groupset/"${curfile}
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
 
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -b15qkf test_dir/testfile  "work_dir/groupset/"${curfile}
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -dfk test_dir/testfile.bz2  "work_dir/groupset/"${curfile}
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/FFT -p 2  
+
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -b15kf test_dir/testfile  
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -dfk test_dir/testfile1.bz2  
     	
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pfscan -dlv file test_dir/testfile "work_dir/groupset/"${curfile}
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pfscan -dlv file test_dir/testfile 
 
-		#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png "work_dir/groupset/"${curfile}
+		#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png 
    
+
+        time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  --  /usr/local/apache2/bin/ab -n 100 -c 2 http://localhost/index.php/ 
+
 
     fi
 done

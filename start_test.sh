@@ -16,7 +16,7 @@ rm work_dir/groupset/*
 #RADIX
 
 echo ================================================ monitor run
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
+time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
 
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/FFT -p 2
 
@@ -28,7 +28,11 @@ echo ================================================ monitor run
 
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png
 
-time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so /usr/local/apache2/bin/ab -n 100 -c 2 http://localhost/index.php
+#sudo time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so --  ./test_apache.sh
+
+#sudo time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/apachectl start
+
+
 
 echo ================================================ prediction 
 
@@ -45,9 +49,9 @@ for curfile in $(ls ${resultdir})
 do
     if test -f ${resultdir}/${curfile}
     then
-    	#echo ${curfile} #"work_dir/groupset/"${curfile}
+    	echo ${curfile} #"work_dir/groupset/"${curfile}
 
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
+    	time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
 
     	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/FFT -p 2  
 
@@ -59,7 +63,7 @@ do
 		#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png 
    
 
-        time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  --  /usr/local/apache2/bin/ab -n 100 -c 2 http://localhost/index.php/ 
+        #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  --  /usr/local/apache2/bin/ab -n 100 -c 2 http://localhost/index.php/ 
 
 
     fi

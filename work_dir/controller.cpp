@@ -436,7 +436,8 @@ int main(int argc, char * argv[])
     if (!counter){
         replay_log = fopen("work_dir/groupset/group_0.log", "r");
         counter = fopen("work_dir/groupset/counter.log","w");
-        fprintf(counter,"%d",1); // first time to read, pointer to  group_1 
+        c = 1;
+        fprintf(counter,"%d",c); // first time to read, pointer to  group_1 
         fclose(counter);
     }
     else{
@@ -444,10 +445,7 @@ int main(int argc, char * argv[])
         fscanf(counter,"%d", &c);
         fclose(counter);
 
-        counter = fopen("work_dir/groupset/counter.log","w");
-        c++;
-        fprintf(counter,"%d",c);
-        fclose(counter);
+        
 
         // point counter to the next group
         std::string s1 = "work_dir/groupset/group_";
@@ -461,6 +459,11 @@ int main(int argc, char * argv[])
 
         std::cout<<s<<endl;
         replay_log = fopen(s.c_str(), "r");
+
+        counter = fopen("work_dir/groupset/counter.log","w");
+        c++;
+        fprintf(counter,"%d",c);
+        fclose(counter);
 
         
     }

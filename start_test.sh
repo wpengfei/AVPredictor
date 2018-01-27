@@ -16,7 +16,8 @@ rm work_dir/groupset/*
 #RADIX
 
 echo ================================================ monitor run
-time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
+
+#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
 
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/FFT -p 2
 
@@ -30,14 +31,20 @@ time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/mai
 
 #sudo time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so --  ./test_apache.sh
 
-#sudo time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/apachectl start
+#time sudo  pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/apachectl start
 
+time sudo pin-3.2-81205-gcc-linux/pin -follow_execv -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/httpd -k start
 
+time /usr/local/apache2/bin/ab -n 10 -c 2 http://localhost/index.php
+
+sudo /usr/local/apache2/bin/httpd -k stop
+
+#-follow_execv
 
 echo ================================================ prediction 
 
 cd work_dir
-time python offline_modules.py
+#time python offline_modules.py
 cd ..
 
 
@@ -51,7 +58,7 @@ do
     then
     	echo ${curfile} #"work_dir/groupset/"${curfile}
 
-    	time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
+    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
 
     	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/FFT -p 2  
 

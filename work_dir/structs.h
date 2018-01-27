@@ -17,10 +17,10 @@
 
 #define TIMEOUT 300 //threshold for timeout
 
-unsigned int timecounter = 0;
+unsigned int timecounter = 0; // count time for timeout in controlled execution
 
 FILE * replay_log;
-FILE * file_mem_access;
+FILE * file_mem;
 FILE * file_lock;
 FILE * file_sync;
 
@@ -41,6 +41,11 @@ bool logging_start = false; //start logging the memory accessing when at least t
 TIME timestamp = 1; 
 
 
+typedef vector<std::string> logString; //
+
+logString mem_log;
+logString lock_log;
+logString sync_log;
 
 #define LIB_RTN_NAME_SIZE 15
 string LIB_RTN_NAME[] = {

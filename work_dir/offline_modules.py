@@ -19,6 +19,10 @@ path_mem = "trace_mem.log"
 def load_sync_traces(path_sync):
 	file_sync_handler = open(path_sync, "r")
 	each_line = True
+
+	l0 = 0
+	l1 = 0
+
 	while each_line:
 		each_line = file_sync_handler.readline()
 
@@ -38,6 +42,10 @@ def load_sync_traces(path_sync):
 def load_lock_traces(path_lock):
 	file_lock_handler = open(path_lock, "r")
 	each_line = True
+
+	l0 = 0
+	l1 = 0
+
 	while each_line:
 		each_line = file_lock_handler.readline()
 
@@ -91,12 +99,22 @@ tlist = [trace1, trace2]
 def load_mem_traces(path_mem):
 	file_mem_handler = open(path_mem, "r")
 	each_line = True
+	l0 = 0
+	l1 = 0
 	while each_line:
 		each_line = file_mem_handler.readline()
-		#print each_line
-
+		'''
+		if l0 == 0:
+			l0 = len(each_line)
+		else:
+			l1 = len(each_line)
+			if l1 - l0 > 2 or l0 - l1 > 2:
+				print "Broken line"
+				continue
+			else:
+				l0 = l1
+		'''
 		if each_line:
-			
 			tid, op, time, ip, addr = scanf.sscanf(each_line,"tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n")
 
 			#if (not tid) or	(not op) or (not time) or (not ip) or (not addr):

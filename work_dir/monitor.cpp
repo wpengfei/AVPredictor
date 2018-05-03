@@ -1,7 +1,6 @@
 #include "pin.H"
 #include "structs.h"
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <iostream>
 
@@ -22,8 +21,10 @@ VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid)
  	if (logging_start){
 
 	   //fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
-	   //fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr);
-    
+	    
+        file_mem = fopen("file_mem_access.log", "w+");
+        fprintf(file_mem, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr);
+        fclose(file_mem);
         /*
         std::string m0 = "tid:";
         std::string m1 = ",op:";
@@ -58,6 +59,19 @@ VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid)
         log_str<<"tid:"<<tid<<",op:R,time:"<<timestamp<<",ip:0x"<<std::hex<<(unsigned int)ip<<",addr:0x"<<std::hex<<(unsigned int)addr<<"\n";
 
         //std::cout<<"log:"<<log_str.str()<<endl;
+        /*
+        fout_m.open("work_dir/trace_mem.log", ios::out | ios::app);
+        if(!fout_m)
+            std::cout<<"open error\n";
+        */
+        
+        /*
+        
+        
+        fout_m.close();
+
+        */
+        fout_m << log_str.str();
 
         mem_log.push_back(log_str.str());
         
@@ -84,11 +98,34 @@ VOID RecordMemWrite(VOID * ip, VOID * addr, THREADID tid)
     	//fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
         //fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr);
 
+        file_mem = fopen("file_mem_access.log", "w+");
+        fprintf(file_mem, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr);
+        fclose(file_mem);
+
         std::ostringstream log_str;
 
         log_str<<"tid:"<<tid<<",op:W,time:"<<timestamp<<",ip:0x"<<std::hex<<(unsigned int)ip<<",addr:0x"<<std::hex<<(unsigned int)addr<<"\n";
 
         //std::cout<<"log:"<<log_str.str()<<endl;
+
+        //fout_m.open( "work_dir/trace_mem.log", ios::app ); 
+        /*
+        fout_m.open( "work_dir/trace_mem.log", ios::out | ios::app);
+        if(!fout_m)
+            std::cout<<"open error\n";
+        
+        fout_m.close();
+        */
+
+        /*
+        fout_m << log_str.str();
+        //PIN_Sleep(5);
+        
+        
+
+        fout_m.close();
+        */
+        fout_m << log_str.str();
 
         mem_log.push_back(log_str.str());
 
@@ -134,7 +171,7 @@ VOID beforeThreadLock(VOID * ip, THREADID tid,  ADDRINT lock_callsite_v, ADDRINT
     //std::cout<<"log:"<<log_str.str()<<endl;
 
     lock_log.push_back(log_str.str());
-
+    fout_l << log_str.str();
 
 
 
@@ -160,7 +197,7 @@ VOID beforeThreadUnLock(VOID * ip, THREADID tid,  ADDRINT unlock_callsite_v, ADD
     //std::cout<<"log:"<<log_str.str()<<endl;
 
     lock_log.push_back(log_str.str());
-
+    fout_l << log_str.str();
   
     PIN_ReleaseLock(&lock);
 }
@@ -182,6 +219,7 @@ VOID afterThreadBarrier(THREADID tid)
     log_str<<"tid:"<<tid<<",time:"<<timestamp<<",type:b\n";
 
     sync_log.push_back(log_str.str());
+    fout_s << log_str.str();
 
     //synch s = {"barrier", threadid, timestamp};
     //synchTable.push_back(s);
@@ -205,6 +243,7 @@ VOID afterThreadCondWait(THREADID tid)
     log_str<<"tid:"<<tid<<",time:"<<timestamp<<",type:w\n";
 
     sync_log.push_back(log_str.str());
+    fout_s << log_str.str();
 
     PIN_ReleaseLock(&lock);
 }
@@ -225,6 +264,7 @@ VOID afterThreadCondTimedwait(THREADID tid)
     log_str<<"tid:"<<tid<<",time:"<<timestamp<<",type:t\n";
 
     sync_log.push_back(log_str.str());
+    fout_s << log_str.str();
 
     PIN_ReleaseLock(&lock);
 }
@@ -245,6 +285,7 @@ VOID afterThreadSleep(THREADID tid)
     log_str<<"tid:"<<tid<<",time:"<<timestamp<<",type:s\n";
 
     sync_log.push_back(log_str.str());
+    fout_s << log_str.str();
 
     PIN_ReleaseLock(&lock);
 }
@@ -394,9 +435,7 @@ VOID Fini(INT32 code, VOID *v)
     //file_lock = fopen("work_dir/trace_lock.log", "w");
     //file_sync = fopen("work_dir/trace_sync.log", "w");
 
-    ofstream fout_m( "work_dir/trace_mem.log" );
-    ofstream fout_l( "work_dir/trace_lock.log" );
-    ofstream fout_s( "work_dir/trace_sync.log" );
+/*
     unsigned int i = 0;
     unsigned int size = 0;
 
@@ -423,6 +462,8 @@ VOID Fini(INT32 code, VOID *v)
         //std::cout<<sync_log[i]<<endl;
         fout_s << sync_log[i];
     }
+
+    */
 
     fout_m.close();
     fout_l.close();
@@ -457,10 +498,14 @@ INT32 Usage()
 
 int main(int argc, char * argv[])
 {
+
+    // Initialize the pin lock
+    PIN_InitLock(&lock);
+
     // Initialize symbol table code, needed for rtn instrumentation
     PIN_InitSymbols();
 
-
+    //file_mem = fopen("file_mem_access.log", "w+");
 
 
     // Initialize pin

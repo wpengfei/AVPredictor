@@ -2,7 +2,7 @@
 #include <map>
 #include <assert.h>
 #include <stdint.h>
-
+#include <fstream>
 
 
 #define STACK_LOWERBOUND 0x40000000  //base address to load shared libraries in Linux x86
@@ -23,6 +23,10 @@ FILE * replay_log;
 FILE * file_mem;
 FILE * file_lock;
 FILE * file_sync;
+
+std::ofstream fout_m( "work_dir/trace_mem.log" );
+std::ofstream fout_l( "work_dir/trace_lock.log" );
+std::ofstream fout_s( "work_dir/trace_sync.log" );
 
 PIN_LOCK lock;
 

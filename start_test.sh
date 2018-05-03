@@ -1,5 +1,8 @@
 
 rm work_dir/groupset/*
+rm work_dir/trace_mem.log
+rm work_dir/trace_lock.log
+rm work_dir/trace_sync.log
 
 #main_bank_lock  2 2
 #main_bank_nolock 2 2
@@ -15,9 +18,9 @@ rm work_dir/groupset/*
 #LU
 #RADIX
 
-echo ================================================ monitor run
+echo ================================================ monitored run
 
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
+time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
 
 #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/FFT -p 2
 
@@ -33,22 +36,22 @@ echo ================================================ monitor run
 
 #time sudo  pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/apachectl start
 
-time sudo pin-3.2-81205-gcc-linux/pin -follow_execv -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/httpd -k start
+#time sudo pin-3.2-81205-gcc-linux/pin -follow_execv -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/httpd -k start
 
-time /usr/local/apache2/bin/ab -n 10 -c 2 http://localhost/index.php
+#time /usr/local/apache2/bin/ab -n 2 -c 2 http://localhost/index.php
 
-sudo /usr/local/apache2/bin/httpd -k stop
+#sudo /usr/local/apache2/bin/httpd -k stop
 
 #-follow_execv
 
 echo ================================================ prediction 
 
 cd work_dir
-#time python offline_modules.py
+time python offline_modules.py
 cd ..
 
 
-echo ================================================ relay run
+echo ================================================ controlled run
 
 resultdir=$(pwd)/'work_dir/groupset'
 
@@ -56,9 +59,9 @@ for curfile in $(ls ${resultdir})
 do
     if test -f ${resultdir}/${curfile}
     then
-    	echo ${curfile} #"work_dir/groupset/"${curfile}
+    	echo ${curfile} "work_dir/groupset/"${curfile}
 
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
+    	time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
 
     	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/FFT -p 2  
 
@@ -67,7 +70,7 @@ do
     	
     	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pfscan -dlv file test_dir/testfile 
 
-		#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png 
+	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png 
    
 
         #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  --  /usr/local/apache2/bin/ab -n 100 -c 2 http://localhost/index.php/ 

@@ -20,63 +20,13 @@ VOID RecordMemRead(VOID * ip, VOID * addr, THREADID tid)
 
  	if (logging_start){
 
-	   //fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
-	    
-        file_mem = fopen("file_mem_access.log", "w+");
-        fprintf(file_mem, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr);
-        fclose(file_mem);
-        /*
-        std::string m0 = "tid:";
-        std::string m1 = ",op:";
-        std::string m2 = ",time:";
-        std::string m3 = ",ip:0x";
-        std::string m4 = ",addr:0x";
-        std::string m5 = "\n";
-
-        std::ostringstream oss1;
-        oss1 << (unsigned int)tid;
-        std::string tid_s = oss1.str();
-
-        std::string op_s = "R";
-
-        std::ostringstream oss2;
-        oss2 << timestamp;
-        std::string time_s = oss2.str();
-
-        std::ostringstream oss3;
-        oss3 <<std::hex<< (unsigned int)ip;
-        std::string ip_s = oss3.str();
-
-        std::ostringstream oss4;
-        oss4 <<std::hex<< (unsigned int)addr;
-        std::string addr_s = oss4.str();
-
-        std::string str = m0 + tid_s + m1 + op_s + m2 + time_s + m3 + ip_s + m4 + addr_s + m5;
-        */
+         
+	    //sprintf(buf.c_str(), "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
+	    sprintf(mem_buf, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'R', timestamp, (unsigned int)ip, (unsigned int)addr);
+        std::string buf(mem_buf);
         
-        std::ostringstream log_str;
+        mem_log.push_back(buf);
 
-        log_str<<"tid:"<<tid<<",op:R,time:"<<timestamp<<",ip:0x"<<std::hex<<(unsigned int)ip<<",addr:0x"<<std::hex<<(unsigned int)addr<<"\n";
-
-        //std::cout<<"log:"<<log_str.str()<<endl;
-        /*
-        fout_m.open("work_dir/trace_mem.log", ios::out | ios::app);
-        if(!fout_m)
-            std::cout<<"open error\n";
-        */
-        
-        /*
-        
-        
-        fout_m.close();
-
-        */
-        fout_m << log_str.str();
-
-        mem_log.push_back(log_str.str());
-        
-
-     
     }
 
 
@@ -95,39 +45,14 @@ VOID RecordMemWrite(VOID * ip, VOID * addr, THREADID tid)
     timestamp++;
  
     if (logging_start){
-    	//fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x,rtn:%s\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr, (char*)rtnName);
-        //fprintf(file_mem_access, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr);
+ 
 
-        file_mem = fopen("file_mem_access.log", "w+");
-        fprintf(file_mem, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr);
-        fclose(file_mem);
-
-        std::ostringstream log_str;
-
-        log_str<<"tid:"<<tid<<",op:W,time:"<<timestamp<<",ip:0x"<<std::hex<<(unsigned int)ip<<",addr:0x"<<std::hex<<(unsigned int)addr<<"\n";
-
-        //std::cout<<"log:"<<log_str.str()<<endl;
-
-        //fout_m.open( "work_dir/trace_mem.log", ios::app ); 
-        /*
-        fout_m.open( "work_dir/trace_mem.log", ios::out | ios::app);
-        if(!fout_m)
-            std::cout<<"open error\n";
+        sprintf(mem_buf, "tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n", tid, 'W', timestamp, (unsigned int)ip, (unsigned int)addr);
         
-        fout_m.close();
-        */
-
-        /*
-        fout_m << log_str.str();
-        //PIN_Sleep(5);
+        std::string buf(mem_buf);
         
-        
-
-        fout_m.close();
-        */
-        fout_m << log_str.str();
-
-        mem_log.push_back(log_str.str());
+        mem_log.push_back(buf);
+       
 
     }
 
@@ -161,17 +86,11 @@ VOID beforeThreadLock(VOID * ip, THREADID tid,  ADDRINT lock_callsite_v, ADDRINT
         tid, timestamp, (ADDRESS)ip, lock_callsite_v, lock_entry_v);
     }
 
-    //fprintf(file_lock, "tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x\n", 
-    		//tid, 'L', timestamp, (unsigned int)lock_callsite_v, (unsigned int)lock_entry_v);
+    sprintf(lock_buf, "tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x\n", 
+    		tid, 'L', timestamp, (unsigned int)lock_callsite_v, (unsigned int)lock_entry_v);
 
-    std::ostringstream log_str;
-
-    log_str<<"tid:"<<tid<<",op:L,time:"<<timestamp<<",callsite_v:0x"<<std::hex<<(unsigned int)lock_callsite_v<<",entry_v:0x"<<std::hex<<(unsigned int)lock_entry_v<<"\n";
-
-    //std::cout<<"log:"<<log_str.str()<<endl;
-
-    lock_log.push_back(log_str.str());
-    fout_l << log_str.str();
+    std::string buf(lock_buf);    
+    lock_log.push_back(buf);
 
 
 
@@ -187,18 +106,12 @@ VOID beforeThreadUnLock(VOID * ip, THREADID tid,  ADDRINT unlock_callsite_v, ADD
         tid, timestamp, (ADDRESS)ip, unlock_callsite_v, unlock_entry_v);
     }
 
-    //fprintf(file_lock, "tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x\n", 
-    		//tid, 'U', timestamp, (unsigned int)unlock_callsite_v, (unsigned int)unlock_entry_v);
+    sprintf(lock_buf, "tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x\n", 
+    		tid, 'U', timestamp, (unsigned int)unlock_callsite_v, (unsigned int)unlock_entry_v);
 
-    std::ostringstream log_str;
-
-    log_str<<"tid:"<<tid<<",op:U,time:"<<timestamp<<",callsite_v:0x"<<std::hex<<(unsigned int)unlock_callsite_v<<",entry_v:0x"<<std::hex<<(unsigned int)unlock_entry_v<<"\n";
-
-    //std::cout<<"log:"<<log_str.str()<<endl;
-
-    lock_log.push_back(log_str.str());
-    fout_l << log_str.str();
-  
+    std::string buf(lock_buf);    
+    lock_log.push_back(buf);
+   
     PIN_ReleaseLock(&lock);
 }
 
@@ -212,18 +125,12 @@ VOID afterThreadBarrier(THREADID tid)
         printf("\033[01;33m[ThreadBarrier] T %d Barrier, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    //fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, timestamp, 'b');
+    sprintf(sync_buf, "tid:%d,time:%d,type:%c\n", tid, timestamp, 'b');
 
-    std::ostringstream log_str;
+    std::string buf(sync_buf);    
+    sync_log.push_back(buf);
 
-    log_str<<"tid:"<<tid<<",time:"<<timestamp<<",type:b\n";
-
-    sync_log.push_back(log_str.str());
-    fout_s << log_str.str();
-
-    //synch s = {"barrier", threadid, timestamp};
-    //synchTable.push_back(s);
-
+ 
     PIN_ReleaseLock(&lock);
 }
 
@@ -236,16 +143,10 @@ VOID afterThreadCondWait(THREADID tid)
         printf("\033[01;33m[ThreadCondWait] T %d Condwait, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    //fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, timestamp, 'w');
+    sprintf(sync_buf, "tid:%d,time:%d,type:%c\n", tid, timestamp, 'w');
 
-    std::ostringstream log_str;
-
-    log_str<<"tid:"<<tid<<",time:"<<timestamp<<",type:w\n";
-
-    sync_log.push_back(log_str.str());
-    fout_s << log_str.str();
-
-    PIN_ReleaseLock(&lock);
+    std::string buf(sync_buf);    
+    sync_log.push_back(buf);
 }
 
 VOID afterThreadCondTimedwait(THREADID tid)
@@ -257,14 +158,10 @@ VOID afterThreadCondTimedwait(THREADID tid)
         printf("\033[01;33m[ThreadCondTimedwait] T %d CondTimewait, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    //fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, tid, 't');
+    printf(sync_buf, "tid:%d,time:%d,type:%c\n", tid, tid, 't');
     
-    std::ostringstream log_str;
-
-    log_str<<"tid:"<<tid<<",time:"<<timestamp<<",type:t\n";
-
-    sync_log.push_back(log_str.str());
-    fout_s << log_str.str();
+    std::string buf(sync_buf);    
+    sync_log.push_back(buf);
 
     PIN_ReleaseLock(&lock);
 }
@@ -278,14 +175,10 @@ VOID afterThreadSleep(THREADID tid)
         printf("\033[01;33m[ThreadSleep] T %d sleep, time: %d.\033[0m\n", tid, timestamp);
     }
 
-    //fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, tid, 's');
-
-    std::ostringstream log_str;
-
-    log_str<<"tid:"<<tid<<",time:"<<timestamp<<",type:s\n";
-
-    sync_log.push_back(log_str.str());
-    fout_s << log_str.str();
+    sprintf(sync_buf, "tid:%d,time:%d,type:%c\n", tid, tid, 's');
+    
+    std::string buf(sync_buf);    
+    sync_log.push_back(buf);
 
     PIN_ReleaseLock(&lock);
 }
@@ -427,50 +320,43 @@ VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
 VOID Fini(INT32 code, VOID *v)
 {
 
-    std::cout<<"mem_log size: "<<mem_log.size()<<endl;
-    std::cout<<"lock_log size: "<<lock_log.size()<<endl;
-    std::cout<<"sync_log size: "<<sync_log.size()<<endl;
+    std::cout<<"==>mem_log size: "<<mem_log.size()<<endl;
+    std::cout<<"==>lock_log size: "<<lock_log.size()<<endl;
+    std::cout<<"==>sync_log size: "<<sync_log.size()<<endl;
 
-    //file_mem = fopen("work_dir/trace_mem.log", "w");
-    //file_lock = fopen("work_dir/trace_lock.log", "w");
-    //file_sync = fopen("work_dir/trace_sync.log", "w");
+    file_mem = fopen("work_dir/trace_mem.log", "w");
+    file_lock = fopen("work_dir/trace_lock.log", "w");
+    file_sync = fopen("work_dir/trace_sync.log", "w");
 
-/*
+
     unsigned int i = 0;
     unsigned int size = 0;
 
 
     size = mem_log.size();
     for(i = 0; i < size; i++){
-        //fprintf(file_mem, "%s", mem_log[i].c_str());
+        fprintf(file_mem, "%s", mem_log[i].c_str());
         //std::cout<<mem_log[i]<<endl;
-        fout_m << mem_log[i];
     }
     
 
     size = lock_log.size();
     for(i = 0; i < size; i++){
-        //fprintf(file_lock, "%s", lock_log[i].c_str());
+        fprintf(file_lock, "%s", lock_log[i].c_str());
         //std::cout<<lock_log[i]<<endl;
-        fout_l << lock_log[i];
     }
     
    
     size = sync_log.size();
     for(i = 0; i < size; i++){
-        //fprintf(file_sync, "%s", sync_log[i].c_str());
+        fprintf(file_sync, "%s", sync_log[i].c_str());
         //std::cout<<sync_log[i]<<endl;
-        fout_s << sync_log[i];
     }
 
-    */
-
-    fout_m.close();
-    fout_l.close();
-    fout_s.close();
-    //fclose(file_mem);
-    //fclose(file_lock);
-    //fclose(file_sync);
+    
+    fclose(file_mem);
+    fclose(file_lock);
+    fclose(file_sync);
 
 }
 
@@ -504,8 +390,6 @@ int main(int argc, char * argv[])
 
     // Initialize symbol table code, needed for rtn instrumentation
     PIN_InitSymbols();
-
-    //file_mem = fopen("file_mem_access.log", "w+");
 
 
     // Initialize pin

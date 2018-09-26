@@ -24,9 +24,9 @@ FILE * file_mem;
 FILE * file_lock;
 FILE * file_sync;
 
-std::ofstream fout_m( "work_dir/trace_mem.log" );
-std::ofstream fout_l( "work_dir/trace_lock.log" );
-std::ofstream fout_s( "work_dir/trace_sync.log" );
+char mem_buf[256];
+char lock_buf[256];
+char sync_buf[256];
 
 PIN_LOCK lock;
 

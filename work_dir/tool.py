@@ -46,7 +46,7 @@ def print_sync_list(sync_list):
 		print i
 
 def show_statistics(mem_trace,cs_list,sync_list,ci_list,result_list,group_num):
-	print ">>>>>>>>>>>>>>>>>>[static result]<<<<<<<<<<<<<<<<<<<<<<<<"
+	print ">>>>>>>>>>>>>>>>>>[statistic result]<<<<<<<<<<<<<<<<<<<<<<<<"
 
 	total_access = 0
 	for addr in mem_trace:

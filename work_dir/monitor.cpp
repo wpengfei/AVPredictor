@@ -168,12 +168,20 @@ VOID beforeThreadLock(THREADID tid, UINT64 ts, UINT32 lock_callsite_v, UINT32 lo
         tid, ts, lock_callsite_v, lock_entry_v);
     #endif
 
-    lockBuf[countLockRef].tid = tid;
-    lockBuf[countLockRef].ts = ts;
-    lockBuf[countLockRef].callv = lock_callsite_v;
-    lockBuf[countLockRef].entryv = lock_entry_v;
-    lockBuf[countLockRef].lock = 1; //lock
-    countLockRef++;
+    if (countLockRef < LOCKBUFSIZE){
+        lockBuf[countLockRef].tid = tid;
+        lockBuf[countLockRef].ts = ts;
+        lockBuf[countLockRef].callv = lock_callsite_v;
+        lockBuf[countLockRef].entryv = lock_entry_v;
+        lockBuf[countLockRef].lock = 1; //lock
+        countLockRef++;
+    }
+    else{
+        #ifdef DEBUG_MONITOR
+            printf("\032[01;33m[Thread--Lock] buffer is full!\033[0m\n");
+        #endif
+    }
+
     //fprintf(file_lock, "tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x\n", tid, 'L', timestamp, (unsigned int)lock_callsite_v, (unsigned int)lock_entry_v);
 
 
@@ -191,13 +199,19 @@ VOID beforeThreadUnLock( THREADID tid, UINT64 ts,  UINT32 unlock_callsite_v, UIN
         tid, ts, unlock_callsite_v, unlock_entry_v);
     #endif
 
-    lockBuf[countLockRef].tid = tid;
-    lockBuf[countLockRef].ts = ts;
-    lockBuf[countLockRef].callv = unlock_callsite_v;
-    lockBuf[countLockRef].entryv = unlock_entry_v;
-    lockBuf[countLockRef].lock = 0; //unlock
-    countLockRef++;
-    
+    if (countLockRef < LOCKBUFSIZE){
+        lockBuf[countLockRef].tid = tid;
+        lockBuf[countLockRef].ts = ts;
+        lockBuf[countLockRef].callv = unlock_callsite_v;
+        lockBuf[countLockRef].entryv = unlock_entry_v;
+        lockBuf[countLockRef].lock = 0; //unlock
+        countLockRef++;
+    }
+    else{
+        #ifdef DEBUG_MONITOR
+            printf("\032[01;33m[ThreadUnLock] buffer is full!\033[0m\n");
+        #endif
+    }
     //fprintf(file_lock, "tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x\n", tid, 'U', timestamp, unlock_callsite_v, unlock_entry_v);
   
     PIN_ReleaseLock(&lock);
@@ -211,10 +225,17 @@ VOID afterThreadBarrier(THREADID tid, UINT64 ts)
         printf("\033[01;33m[ThreadBarrier] T %d Barrier, time: 0x%llx.\033[0m\n", tid, ts);
     #endif
 
-    syncBuf[countSyncRef].tid = tid;
-    syncBuf[countSyncRef].ts = ts;
-    syncBuf[countSyncRef].type = 1;
-    countSyncRef++;
+    if (countLockRef < SYNCBUFSIZE){
+        syncBuf[countSyncRef].tid = tid;
+        syncBuf[countSyncRef].ts = ts;
+        syncBuf[countSyncRef].type = 1;
+        countSyncRef++;
+    }
+    else{
+        #ifdef DEBUG_MONITOR
+            printf("\032[01;33m[ThreadBarrier] buffer is full!\033[0m\n");
+        #endif
+    }
     //fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, timestamp, 'b');
 
     PIN_ReleaseLock(&lock);
@@ -228,11 +249,17 @@ VOID afterThreadCondWait(THREADID tid, UINT64 ts)
         printf("\033[01;33m[ThreadCondWait] T %d Condwait, time: 0x%llx.\033[0m\n", tid, ts);
     #endif
 
-    syncBuf[countSyncRef].tid = tid;
-    syncBuf[countSyncRef].ts = ts;
-    syncBuf[countSyncRef].type = 2;
-    countSyncRef++;
-
+    if (countLockRef < SYNCBUFSIZE){
+        syncBuf[countSyncRef].tid = tid;
+        syncBuf[countSyncRef].ts = ts;
+        syncBuf[countSyncRef].type = 2;
+        countSyncRef++;
+    }
+    else{
+        #ifdef DEBUG_MONITOR
+            printf("\032[01;33m[ThreadCondWait] buffer is full!\033[0m\n");
+        #endif
+    }
     //fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, timestamp, 'w');
  
     PIN_ReleaseLock(&lock);
@@ -246,11 +273,17 @@ VOID afterThreadCondTimedwait(THREADID tid, UINT64 ts)
         printf("\033[01;33m[ThreadCondTimedwait] T %d CondTimewait, time: 0x%llx.\033[0m\n", tid, ts);
     #endif
 
-    syncBuf[countSyncRef].tid = tid;
-    syncBuf[countSyncRef].ts = ts;
-    syncBuf[countSyncRef].type = 3;
-    countSyncRef++;
-
+    if (countLockRef < SYNCBUFSIZE){
+        syncBuf[countSyncRef].tid = tid;
+        syncBuf[countSyncRef].ts = ts;
+        syncBuf[countSyncRef].type = 3;
+        countSyncRef++;
+    }
+    else{
+        #ifdef DEBUG_MONITOR
+            printf("\032[01;33m[ThreadCondTimedwait] buffer is full!\033[0m\n");
+        #endif
+    }
     //fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, tid, 't');
     
     PIN_ReleaseLock(&lock);
@@ -264,11 +297,17 @@ VOID afterThreadSleep(THREADID tid, UINT64 ts)
         printf("\033[01;33m[ThreadSleep] T %d sleep, time: 0x%llx.\033[0m\n", tid, ts);
     #endif
     
-    syncBuf[countSyncRef].tid = tid;
-    syncBuf[countSyncRef].ts = ts;
-    syncBuf[countSyncRef].type = 4;
-    countSyncRef++;
-
+    if (countLockRef < SYNCBUFSIZE){
+        syncBuf[countSyncRef].tid = tid;
+        syncBuf[countSyncRef].ts = ts;
+        syncBuf[countSyncRef].type = 4;
+        countSyncRef++;
+    }
+    else{
+        #ifdef DEBUG_MONITOR
+            printf("\032[01;33m[ThreadSleep] buffer is full!\033[0m\n");
+        #endif
+    }
     //fprintf(file_sync, "tid:%d,time:%d,type:%c\n", tid, tid, 's');
     
     PIN_ReleaseLock(&lock);

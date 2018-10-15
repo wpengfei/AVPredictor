@@ -13,8 +13,8 @@
 #define MAX_THREAD_NUM 10
 
 #define TIMEOUT 300 //threshold for timeout
-#define LOCKBUFSIZE 10000
-#define SYNCBUFSIZE 1000
+#define LOCKBUFSIZE 100000
+#define SYNCBUFSIZE 100000
 
 #define NUM_BUF_PAGES 4096
 

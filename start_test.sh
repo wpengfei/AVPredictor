@@ -31,7 +31,7 @@ echo ================================================ monitored run
 
 ## monitor runtime
 #time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/fft/FFT -p 2
-time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/radix/RADIX -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/radix/RADIX -p 2
 #time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/lu-contiguous_blocks/LU -p 2
 #time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/lu-non_contiguous_blocks/LU -p 2
 #time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/ocean-contiguous_partitions/OCEAN -p 2
@@ -43,7 +43,7 @@ time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/s
 
 #time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
 
-#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -b15kf test_dir/testfile
+time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -b15kf test_dir/trace_mem.log
 
 #time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -dfk test_dir/testfile1.bz2 
 
@@ -80,16 +80,16 @@ do
     then
     	echo "work_dir/groupset/"${curfile}
 
-    	time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
+    	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
 
     	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/FFT -p 2  
 
-    	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -b15kf test_dir/testfile  
+    	time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -b15kf test_dir/trace_mem.log  
     	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -dfk test_dir/testfile1.bz2  
     	
     	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pfscan -dlv file test_dir/testfile 
 
-	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png 
+	    #time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png 
    
 
         #time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so  --  /usr/local/apache2/bin/ab -n 100 -c 2 http://localhost/index.php/ 

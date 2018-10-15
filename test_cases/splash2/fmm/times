@@ -1,58 +1,28 @@
 TIMING:
-1	256	1.00e-06	5
+2	256	1.00e-06	5
 Time Step 0
 Processor 0
-	Total Time = 966
-	Tree Construction Time = 20
-	List Construction Time = 30
-	Partition Time = 6
-	Tree Pass Time = 194
-	Inter Particle Time = 706
-	Barrier Time = 1
-	Intra Particle Time = 3
-	Other Time = 4
+	Total Time = 1988
+Processor 1
+	Total Time = 2056
 Time Step 1
 Processor 0
-	Total Time = 1058
-	Tree Construction Time = 8
-	List Construction Time = 20
-	Partition Time = 5
-	Tree Pass Time = 195
-	Inter Particle Time = 818
-	Barrier Time = 0
-	Intra Particle Time = 5
-	Other Time = 5
+	Total Time = 2617
+Processor 1
+	Total Time = 2567
 Time Step 2
 Processor 0
-	Total Time = 1027
-	Tree Construction Time = 9
-	List Construction Time = 20
-	Partition Time = 5
-	Tree Pass Time = 212
-	Inter Particle Time = 764
-	Barrier Time = 0
-	Intra Particle Time = 5
-	Other Time = 6
+	Total Time = 1640
+Processor 1
+	Total Time = 1642
 Time Step 3
 Processor 0
-	Total Time = 1091
-	Tree Construction Time = 10
-	List Construction Time = 19
-	Partition Time = 4
-	Tree Pass Time = 267
-	Inter Particle Time = 778
-	Barrier Time = 0
-	Intra Particle Time = 5
-	Other Time = 4
+	Total Time = 3070
+Processor 1
+	Total Time = 3061
 Time Step 4
 Processor 0
-	Total Time = 1107
-	Tree Construction Time = 12
-	List Construction Time = 21
-	Partition Time = 8
-	Tree Pass Time = 278
-	Inter Particle Time = 769
-	Barrier Time = 1
-	Intra Particle Time = 7
-	Other Time = 9
+	Total Time = 3264
+Processor 1
+	Total Time = 3210
 END

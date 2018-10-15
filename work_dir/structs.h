@@ -1,55 +1,113 @@
-#include <vector>
-#include <map>
 #include <assert.h>
-#include <stdint.h>
 #include <fstream>
 
 
+//#define DEBUG_MONITOR   //debug mode for replay run
+//#define DEBUG_REPLAY    //debug mode for replay run
+
 #define STACK_LOWERBOUND 0x40000000  //base address to load shared libraries in Linux x86
-//0xbfffffff 
-#define USER_UPPERBOUND  0x15000000
+//
+#define USER_UPPERBOUND  0x15000000 
 #define USER_LOWERBOUND  0x08048000 //start address for Unix/Linux x86 program 
 
 #define MAX_THREAD_NUM 10
 
-#define DEBUG_TRACING 0  //debug mode for tracing run
-#define DEBUG_REPLAY  1  //debug mode for replay run
-
 #define TIMEOUT 300 //threshold for timeout
+#define LOCKBUFSIZE 10000
+#define SYNCBUFSIZE 1000
 
-unsigned int timecounter = 0; // count time for timeout in controlled execution
+#define NUM_BUF_PAGES 4096
 
-FILE * replay_log;
+//global varibles
+UINT32 countTimeout = 0; // count time for timeout in controlled execution
+UINT32 countLockRef = 0; // count time for
+UINT32 countSyncRef = 0;
+UINT32 countMemRef = 0;
+
+BOOL logEnable = false; //start logging the memory accessing when at least two threads exist.
+UINT32 threadNum = 0; //number of running threads
+UINT32 threadExisted = 0; //used to mark how many threads existed once.
+UINT32 timestamp = 1;  // timer to mark the ordering of the operations, 0 is default and meaningless.*/
+
+FILE * file_mem0;
 FILE * file_mem;
 FILE * file_lock;
-FILE * file_sync;
+FILE * replay_log;
 
-char mem_buf[256];
-char lock_buf[256];
-char sync_buf[256];
+FILE * file_sync;
 
 PIN_LOCK lock;
 
-typedef unsigned int ADDRESS;
-typedef unsigned int TIME;
-typedef unsigned int COUNT;
+BUFFER_ID bufId; // The ID of the buffer
 
+struct MEMREF
+{
+    UINT32     pc;
+    UINT32     addr;
+    UINT64     ts; //timestamp
+    UINT32     tid;
+    UINT32     read; // read: 1, write: 0
+};
 
-//global varibles
-COUNT threadNum = 0; //number of running threads
-COUNT threadExisted = 0; //used to mark how many threads existed once.
-bool logging_start = false; //start logging the memory accessing when at least two threads exist.
+struct LOCKREF{
+     UINT32 tid;
+     UINT64 ts; //timestamp
+     UINT32 callv; //callsite value
+     UINT32 entryv; //entrypoint value
+     UINT32 lock; // lock: 1, unlock: 0
+} lockBuf[LOCKBUFSIZE];
 
-/* A global timer to mark the ordering of the operations. 
-*Use 0 to indicate a default value, which is meaningless.*/
-TIME timestamp = 1; 
+struct SYNCREF{
+    UINT32 tid;
+    UINT64 ts; //timestamp
+    UINT32 type; //1 Barrier, 2 CondWait, 3CondiTimeWait, 4 Sleep
+} syncBuf[SYNCBUFSIZE];
 
+// for controller
+#define SLEEP_TIME 5
 
-typedef vector<std::string> logString; //
+#define max_size 32 // default max size for each group
 
-logString mem_log;
-logString lock_log;
-logString sync_log;
+UINT32 ci_count = 0;
+UINT32 cur_ci = 0; //current CI that being processed
+
+UINT32 type[max_size] = {0}; // 0: to move instructions; 1: to move critical sections.
+
+UINT32 first_id[max_size] = {0};
+UINT32 first_arg1[max_size] = {0};
+UINT32 first_arg2[max_size] = {0};
+
+UINT32 second_id[max_size] = {0};
+UINT32 second_arg1[max_size] = {0};
+UINT32 second_arg2[max_size] = {0};
+
+UINT32 inter_id[max_size] = {0};
+UINT32 inter_arg1[max_size] = {0};
+UINT32 inter_arg2[max_size] = {0};
+
+UINT32 first_tid = 0;
+UINT32 first_inst = 0; //use for non-critical section situations
+UINT32 first_addr = 0;
+UINT32 first_lock = 0; // use for critical section situations
+UINT32 first_unlock = 0;
+
+UINT32 second_tid = 0;
+UINT32 second_inst = 0;
+UINT32 second_addr = 0;
+UINT32 second_lock = 0;
+UINT32 second_unlock = 0;
+
+UINT32 inter_tid = 0;
+UINT32 inter_inst = 0;
+UINT32 inter_addr = 0;
+UINT32 inter_lock = 0;
+UINT32 inter_unlock = 0;
+
+bool is_locked_type = false;
+bool first_ready = false;
+bool inter_ready = false;
+bool second_ready = false;
+
 
 #define LIB_RTN_NAME_SIZE 15
 string LIB_RTN_NAME[] = {

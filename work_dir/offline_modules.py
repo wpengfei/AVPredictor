@@ -1,4 +1,4 @@
-import scanf
+import struct
 import tool
 
 mem_trace = {} # structured memory traces
@@ -16,69 +16,65 @@ path_sync = "trace_sync.log"
 path_lock = "trace_lock.log"
 path_mem = "trace_mem.log"
 
+READ = 1
+WRITE = 0
+
+LOCK = 1
+UNLOCK = 0
+
+BARRIER = 1
+CONDWAIT = 2
+CONDTIMEWAIT = 3
+SLEEP = 4
+
+
 def load_sync_traces(path_sync):
-	file_sync_handler = open(path_sync, "r")
-	each_line = True
+	file_sync_handler = open(path_sync, "rb")
+	each_line = file_sync_handler.read(16)
 
-	l0 = 0
-	l1 = 0
+	while each_line:	
+		tid, time, ty = struct.unpack("@2IQ",each_line)
+		#print "[load_sync]tid:",tid,"time:",hex(time),"ty:",ty
+		sync = {}
+		sync["tid"] = tid
+		sync["time"] = time
+		sync["type"] = ty 
+		sync_list.append(sync)
 
-	while each_line:
-		each_line = file_sync_handler.readline()
-
-		if each_line:
-			tid, time, ty = scanf.sscanf(each_line,"tid:%d,time:%d,type:%c\n")
-
-			sync = {}
-			sync["tid"] = tid
-			sync["time"] = time
-			sync["type"] = ty # 'b': barriar, 'w': Condwait, 't': CondTimewait, 's': sleep
-			sync_list.append(sync)
+		each_line = file_sync_handler.read(16)
 
 	file_sync_handler.close()
 
-
-
 def load_lock_traces(path_lock):
-	file_lock_handler = open(path_lock, "r")
-	each_line = True
-
-	l0 = 0
-	l1 = 0
+	file_lock_handler = open(path_lock, "rb")
+	each_line = file_lock_handler.read(24)
 
 	while each_line:
-		each_line = file_lock_handler.readline()
 
-		if each_line:
-			tid, op, time, callsite_v, entry_v = scanf.sscanf(each_line,"tid:%d,op:%c,time:%d,callsite_v:0x%x,entry_v:0x%x\n")
+		tid, time, callsite_v, entry_v, op = struct.unpack("@IQ3I",each_line)
+		#print "[load_lock]tid:",tid,"time:",hex(time),"callsite_v:",hex(callsite_v),"entry_v",hex(entry_v),"op",op
 
-			callsite_v = hex(callsite_v)
-			entry_v = hex(entry_v)
+		if op == LOCK: #create a critical section 
+			cs = {} # three-tuple (tid, call_lock_v, call_unlock_v) can uniquely determine a critical section 
+			cs["tid"] = tid
+			cs["stime"] = time #start time 
+			cs["ftime"] = 0 # finish time
+			cs["l_cv"] = callsite_v # lock_callsite_value
+			cs["l_ev"] = entry_v # lock_entry_value
+			cs["u_cv"] = 0 # unlock_callsite_value
+			cs["u_ev"] = 0 # unlock_entry_value
+			cs_list.append(cs)
+		else: #complete the critical section
+			for it in cs_list:
+				if it["tid"] == tid and it["l_ev"] == entry_v and it["ftime"] == 0:
+					it["ftime"] = time
+					it["u_cv"] = callsite_v
+					it["u_ev"] = entry_v
 
-			if op == "L": #create a critical section 
-				cs = {} # three-tuple (tid, call_lock_v, call_unlock_v) can uniquely determine a critical section 
-				cs["tid"] = str(tid)
-				cs["stime"] = time #start time 
-				cs["ftime"] = 0 # finish time
-				cs["l_cv"] = callsite_v # lock_callsite_value
-				cs["l_ev"] = entry_v # lock_entry_value
-				cs["u_cv"] = 0 # unlock_callsite_value
-				cs["u_ev"] = 0 # unlock_entry_value
-				cs_list.append(cs)
-			else: #complete the critical section
-				for it in cs_list:
-					if it["tid"] == str(tid) and it["l_ev"] == entry_v and it["ftime"] == 0:
-						it["ftime"] = time
-						it["u_cv"] = callsite_v
-						it["u_ev"] = entry_v
+		each_line = file_lock_handler.read(24)
 
 	file_lock_handler.close()
 
-
-
-
-
- 
 
 '''
 mem_trace = {"addr1": addr_dict1, "addr2":addr_dict2}
@@ -91,97 +87,73 @@ tid_dict = {"optag": 2, "trace_list": tlist}    # optag: 0,R; 1,W; 2,R&W
 
 tlist = [trace1, trace2]
 
-
-
 '''
-
-
 def load_mem_traces(path_mem):
-	file_mem_handler = open(path_mem, "r")
-	each_line = True
-	l0 = 0
-	l1 = 0
+	file_mem_handler = open(path_mem, "rb")
+	each_line = file_mem_handler.read(24)
 	while each_line:
-		each_line = file_mem_handler.readline()
-		'''
-		if l0 == 0:
-			l0 = len(each_line)
-		else:
-			l1 = len(each_line)
-			if l1 - l0 > 2 or l0 - l1 > 2:
-				print "Broken line"
-				continue
-			else:
-				l0 = l1
-		'''
-		if each_line:
-			tid, op, time, ip, addr = scanf.sscanf(each_line,"tid:%d,op:%c,time:%d,ip:0x%x,addr:0x%x\n")
+		
+		ip,addr,time,tid,op = struct.unpack("@2IQ2I", each_line)
+		#print "[load_mem]ip",hex(ip),"addr:",hex(addr),"time:",hex(time),"tid:",tid,"op",op
+		#ip = str(hex(ip))
+		#addr = str(hex(addr))
+		#tid = str(tid)
+		trace = {}
+		trace["tid"] = tid	
+		trace["time"] = time
+		trace["ip"] = ip
+		trace["addr"] = addr
+		trace["op"] = op
+		#trace["rtn"] = rtn
 
-			#if (not tid) or	(not op) or (not time) or (not ip) or (not addr):
-			#	print "Broken line,", tid, op, time, ip, addr
-			#	continue
-			
-			ip = str(hex(ip))
-			addr = str(hex(addr))
-			tid = str(tid)
-			trace = {}
-			trace["tid"] = tid
-			trace["op"] = op 
-			trace["time"] = time
-			trace["ip"] = ip
-			trace["addr"] = addr
-			#trace["rtn"] = rtn
+		if  mem_trace.has_key(addr):
+			if mem_trace[addr].has_key(tid):
+				optag = mem_trace[addr][tid]["optag"]
+				if  op == READ and optag == 1:
+					optag = 2;
+					mem_trace[addr][tid]["optag"] = optag
+				elif op == WRITE and optag == 0:
+					optag = 2;
+					mem_trace[addr][tid]["optag"] = optag
 
-			if  mem_trace.has_key(addr):
-
-				if mem_trace[addr].has_key(tid):
-
-					optag = mem_trace[addr][tid]["optag"]
-
-					if  op == "R" and optag == 1:
-						optag = 2;
-						mem_trace[addr][tid]["optag"] = optag
-					elif op == "W" and optag == 0:
-						optag = 2;
-						mem_trace[addr][tid]["optag"] = optag
-
-					mem_trace[addr][tid]["trace_list"].append(trace)
-
-				else:
-					tlist = []
-					tlist.append(trace)
-
-					tid_dict = {}
-					if op == "R":
-						tid_dict["optag"] = 0
-					else:
-						tid_dict["optag"] = 1
-					tid_dict["trace_list"] = tlist
-
-					mem_trace[addr]["thread_num"] = mem_trace[addr]["thread_num"] + 1
-					mem_trace[addr]["tid_list"].append(tid)
-					mem_trace[addr][tid] = tid_dict
+				mem_trace[addr][tid]["trace_list"].append(trace)
 
 			else:
 				tlist = []
 				tlist.append(trace)
-
 				tid_dict = {}
-				if op == "R":
+				if op == READ:
 					tid_dict["optag"] = 0
 				else:
 					tid_dict["optag"] = 1
 				tid_dict["trace_list"] = tlist
 
-				tid_list = [];
-				tid_list.append(tid)
+				mem_trace[addr]["thread_num"] = mem_trace[addr]["thread_num"] + 1
+				mem_trace[addr]["tid_list"].append(tid)
+				mem_trace[addr][tid] = tid_dict
 
-				addr_dict = {}
-				addr_dict["thread_num"] = 1
-				addr_dict["tid_list"] = tid_list
-				addr_dict[tid] = tid_dict
-				
-				mem_trace[addr] = addr_dict
+		else:
+			tlist = []
+			tlist.append(trace)
+
+			tid_dict = {}
+			if op == READ:
+				tid_dict["optag"] = 0
+			else:
+				tid_dict["optag"] = 1
+			tid_dict["trace_list"] = tlist
+
+			tid_list = [];
+			tid_list.append(tid)
+
+			addr_dict = {}
+			addr_dict["thread_num"] = 1
+			addr_dict["tid_list"] = tid_list
+			addr_dict[tid] = tid_dict
+			
+			mem_trace[addr] = addr_dict
+
+		each_line = file_mem_handler.read(24)
 
 	file_mem_handler.close()
 
@@ -191,12 +163,12 @@ def find_write_trace(tlist,time1,time2):
 	assert time1 < time2
 	ret = []
 	for it in tlist:
-		if it["op"] == 'R':
+		if it["op"] == READ:
 			continue
 		elif it["time"] > time1 and it["time"] < time2:
 			continue
-		elif it["time"] - time2 > DISTANCE or time1 - it["time"] > DISTANCE:
-			continue
+		#elif it["time"] - time2 > DISTANCE or time1 - it["time"] > DISTANCE:
+			#continue
 		else:
 			ret.append(it)
 
@@ -206,12 +178,12 @@ def find_read_trace(tlist,time1,time2):
 	assert time1 < time2
 	ret = []
 	for it in tlist:
-		if it["op"] == 'W':
+		if it["op"] == WRITE:
 			continue
 		elif it["time"] > time1 and it["time"] < time2:
 			continue
-		elif it["time"] - time2 > DISTANCE or time1 - it["time"] > DISTANCE:
-			continue
+		#elif it["time"] - time2 > DISTANCE or time1 - it["time"] > DISTANCE:
+			#continue
 		else:
 			ret.append(it)
 
@@ -241,11 +213,12 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 				# first and second in a CI must not be interleaved by an access from the same thread
 				# aka. first and second must be next to each other in the list
 				# besides, the occurrences should not beyond a DISTANCE
-				if tlist0[i+1]["time"] - tlist0[i]["time"] > DISTANCE:
-					continue
+				
+				#if tlist0[i+1]["time"] - tlist0[i]["time"] > DISTANCE:
+				#	continue
 
-				if tlist0[i]["op"] == "R":
-					if tlist0[i+1]["op"] == "R":
+				if tlist0[i]["op"] == READ:
+					if tlist0[i+1]["op"] == READ:
 						ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
 						for it in ret_list:
 							ci = {}
@@ -253,7 +226,7 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 							ci["second"] = tlist0[i+1]
 							ci["inter"] = it
 							ci_list.append(ci)
-					elif tlist0[i+1]["op"] == "W":
+					elif tlist0[i+1]["op"] == WRITE:
 						ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
 						for it in ret_list:
 							ci = {}
@@ -262,8 +235,8 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 							ci["inter"] = it
 							ci_list.append(ci)
 
-				elif tlist0[i]["op"] == "W":
-					if tlist0[i+1]["op"] == "R":
+				elif tlist0[i]["op"] == WRITE:
+					if tlist0[i+1]["op"] == READ:
 						ret_list = find_write_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
 						for it in ret_list:
 							ci = {}
@@ -272,7 +245,7 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 							ci["inter"] = it
 							ci_list.append(ci)
 				
-					elif tlist0[i+1]["op"] == "W":
+					elif tlist0[i+1]["op"] == WRITE:
 						ret_list = find_read_trace(tlist1,tlist0[i]["time"],tlist0[i+1]["time"])
 						for it in ret_list:
 							ci = {}
@@ -284,11 +257,11 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 		if l1 >= 2:
 			for i in range(l1-1): # switch tlist0 and tlist 1
 
-				if tlist1[i+1]["time"] - tlist1[i]["time"] > DISTANCE: #abandon the unlikely cases
-					continue
+				#if tlist1[i+1]["time"] - tlist1[i]["time"] > DISTANCE: #abandon the unlikely cases
+				#	continue
 			
-				if tlist1[i]["op"] == "R":
-					if tlist1[i+1]["op"] == "R":
+				if tlist1[i]["op"] == READ:
+					if tlist1[i+1]["op"] == READ:
 						ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
 						for it in ret_list:
 							ci = {}
@@ -297,7 +270,7 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 							ci["inter"] = it
 							ci_list.append(ci)
 
-					elif tlist1[i+1]["op"] == "W":
+					elif tlist1[i+1]["op"] == WRITE:
 						ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
 						for it in ret_list:
 							ci = {}
@@ -306,8 +279,8 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 							ci["inter"] = it
 							ci_list.append(ci)
 
-				elif tlist1[i]["op"] == "W":
-					if tlist1[i+1]["op"] == "R":
+				elif tlist1[i]["op"] == WRITE:
+					if tlist1[i+1]["op"] == READ:
 						ret_list = find_write_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
 						for it in ret_list:
 							ci = {}
@@ -315,7 +288,7 @@ def find_ci_from_thread_pair(tid_dict0, tid_dict1):
 							ci["second"] = tlist1[i+1]
 							ci["inter"] = it
 							ci_list.append(ci)
-					elif tlist1[i+1]["op"] == "W":
+					elif tlist1[i+1]["op"] == WRITE:
 						ret_list = find_read_trace(tlist0,tlist1[i]["time"],tlist1[i+1]["time"])
 						for it in ret_list:
 							ci = {}
@@ -348,8 +321,6 @@ def predictor():
 					for j in range(i+1,l):
 						tid_dict1 = mem_trace[addr][tid_list[j]]
 						find_ci_from_thread_pair(tid_dict0, tid_dict1) #directed pairs
-
-
 
 def pruner():
 	# remove the infesible cases from the ci_list
@@ -617,9 +588,9 @@ def find_identifier():
 		if re["first_cs"] != None and re["second_cs"] != None and  re["inter_cs"] != None:
 			if re["first_cs"]["l_ev"] ==  re["second_cs"]["l_ev"] and re["first_cs"]["l_ev"] ==  re["inter_cs"]["l_ev"]:
 
-				msg_str = str(1)+"["+re["first_cs"]["tid"]+"]"+re["first_cs"]["l_cv"]+","+re["first_cs"]["u_cv"]+"; [" \
-				+re["second_cs"]["tid"]+"]"+re["second_cs"]["l_cv"]+","+re["second_cs"]["u_cv"]+"; [" \
-				+re["inter_cs"]["tid"]+"]"+re["inter_cs"]["l_cv"]+","+re["inter_cs"]["u_cv"]+"\n"
+				msg_str = str(1)+"["+str(re["first_cs"]["tid"])+"]"+str(re["first_cs"]["l_cv"])+","+str(re["first_cs"]["u_cv"])+"; [" \
+				+str(re["second_cs"]["tid"])+"]"+str(re["second_cs"]["l_cv"])+","+str(re["second_cs"]["u_cv"])+"; [" \
+				+str(re["inter_cs"]["tid"])+"]"+str(re["inter_cs"]["l_cv"])+","+str(re["inter_cs"]["u_cv"])+"\n"
 
 				first_interval = []
 				first_interval.append(re["first_cs"]["stime"])
@@ -634,9 +605,9 @@ def find_identifier():
 				grouper(first_interval, second_interval, inter_interval, msg_str)
 			
 			else: # to be refined 
-				msg_str = str(0)+"["+re["first"]["tid"]+"]"+re["first"]["ip"]+","+re["first"]["addr"]+"; [" \
-				+re["second"]["tid"]+"]"+re["second"]["ip"]+","+re["second"]["addr"]+"; [" \
-				+re["inter"]["tid"]+"]"+re["inter"]["ip"]+","+re["inter"]["addr"]+"\n"
+				msg_str = str(0)+"["+str(re["first"]["tid"])+"]"+str(re["first"]["ip"])+","+str(re["first"]["addr"])+"; [" \
+				+str(re["second"]["tid"])+"]"+str(re["second"]["ip"])+","+str(re["second"]["addr"])+"; [" \
+				+str(re["inter"]["tid"])+"]"+str(re["inter"]["ip"])+","+str(re["inter"]["addr"])+"\n"
 
 				first_interval = []
 				first_interval.append(re["first"]["time"])
@@ -651,9 +622,9 @@ def find_identifier():
 				grouper(first_interval, second_interval, inter_interval, msg_str)
 
 		else:
-			msg_str = str(0)+"["+re["first"]["tid"]+"]"+re["first"]["ip"]+","+re["first"]["addr"]+"; [" \
-			+re["second"]["tid"]+"]"+re["second"]["ip"]+","+re["second"]["addr"]+"; [" \
-			+re["inter"]["tid"]+"]"+re["inter"]["ip"]+","+re["inter"]["addr"]+"\n"
+			msg_str = str(0)+"["+str(re["first"]["tid"])+"]"+str(re["first"]["ip"])+","+str(re["first"]["addr"])+"; [" \
+			+str(re["second"]["tid"])+"]"+str(re["second"]["ip"])+","+str(re["second"]["addr"])+"; [" \
+			+str(re["inter"]["tid"])+"]"+str(re["inter"]["ip"])+","+str(re["inter"]["addr"])+"\n"
 
 			first_interval = []
 			first_interval.append(re["first"]["time"])
@@ -667,7 +638,7 @@ def find_identifier():
 			
 			grouper(first_interval, second_interval, inter_interval, msg_str)
 		
-		#print msg_str
+		#print "msg_str", msg_str
 		#file_result_handler.write(msg_str)	
 		
 	#file_result_handler.close()

@@ -19,6 +19,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <pthread.h>
+#include "time.h"
+
 
 // typedefs
 typedef struct {
@@ -78,6 +80,9 @@ void *t2_main(void *args) {
 }
 
 int main(int argc, char *argv[]) {
+
+  long start = clock();
+
   // allocate bank account
   bank_account_type *account = new bank_account_type;
   init_account(account);
@@ -90,6 +95,11 @@ int main(int argc, char *argv[]) {
 
   // print and check results
   printf("balance = %d\n", account->balance);
+
+  long finish = clock();
+
+  printf("start:%ld, finish: %ld, Time cost: %ld\n", start, finish, finish-start);
+
   assert(account->balance == 0);
 
   return 0;

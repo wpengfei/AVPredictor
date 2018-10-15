@@ -34,6 +34,7 @@ def print_result_list(result_list):
 		print "second_cs:",i["second_cs"]
 		print "inter_cs:",i["inter_cs"]
 		print "-----------------------"
+	print "finish"
 
 def print_cs_list(cs_list):
 	print ">>>>>>>>>>>>>>>>>>[loaded cs list]<<<<<<<<<<<<<<<<<<<<<<<<"
@@ -53,7 +54,7 @@ def show_statistics(mem_trace,cs_list,sync_list,ci_list,result_list,group_num):
 		tid_list = mem_trace[addr]["tid_list"]
 		#print "addr:",addr
 		for i in range(len(tid_list)):
-			total_access = total_access + len(mem_trace[addr][str(tid_list[i])]["trace_list"])
+			total_access = total_access + len(mem_trace[addr][tid_list[i]]["trace_list"])
 			#print "\ttid:",tid_list[i],", count:",len(mem_trace[addr][str(tid_list[i])]["trace_list"]), ", optag:",mem_trace[addr][str(tid_list[i])]["optag"]
 
 

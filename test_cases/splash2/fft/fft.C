@@ -1,4 +1,3 @@
-
 /*************************************************************************/
 /*                                                                       */
 /*  Copyright (c) 1994 Stanford University                               */
@@ -108,7 +107,7 @@ void InitU(long N, double *u);
 void InitU2(long N, double *u, long n1);
 long BitReverse(long M, long k);
 void FFT1D(long direction, long M, long N, double *x, double *scratch, double *upriv, double *umain2,
-     long MyNum, long *l_transtime, long MyFirst, long MyLast, long pad_length, long test_result, long dostats);
+	   long MyNum, long *l_transtime, long MyFirst, long MyLast, long pad_length, long test_result, long dostats);
 void TwiddleOneCol(long direction, long n1, long j, double *u, double *x, long pad_length);
 void Scale(long n1, long N, double *x);
 void Transpose(long n1, double *src, double *dest, long MyNum, long MyFirst, long MyLast, long pad_length);
@@ -145,33 +144,33 @@ int main(int argc, char *argv[])
                   printerr("P must be a power of 2\n");
                   exit(-1);
                 }
-          break;  
+	        break;  
       case 'm': M = atoi(optarg); 
                 m1 = M/2;
                 if (2*m1 != M) {
                   printerr("M must be even\n");
                   exit(-1);
                 }
-          break;  
+	        break;  
       case 'n': num_cache_lines = atoi(optarg); 
                 orig_num_lines = num_cache_lines;
                 if (num_cache_lines < 1) {
                   printerr("Number of cache lines must be >= 1\n");
                   exit(-1);
                 }
-          break;  
+	        break;  
       case 'l': log2_line_size = atoi(optarg); 
                 if (log2_line_size < 0) {
                   printerr("Log base 2 of cache line length in bytes must be >= 0\n");
                   exit(-1);
                 }
-          break;  
+	        break;  
       case 's': dostats = !dostats; 
-          break;
+	        break;
       case 't': test_result = !test_result; 
-          break;
+	        break;
       case 'o': doprint = !doprint; 
-          break;
+	        break;
       case 'h': printf("Usage: FFT <options>\n\n");
                 printf("options:\n");
                 printf("  -mM : M = even integer; 2**M total complex data points transformed.\n");
@@ -186,8 +185,8 @@ int main(int argc, char *argv[])
                 printf("  -h  : Print out command line options.\n\n");
                 printf("Default: FFT -m%1d -p%1d -n%1d -l%1d\n",
                        DEFAULT_M,DEFAULT_P,NUM_CACHE_LINES,LOG2_LINE_SIZE);
-    exit(0);
-          break;
+		exit(0);
+	        break;
     }
   }
 
@@ -378,23 +377,23 @@ int main(int argc, char *argv[])
     printf("  Avg        %10.0f     %10.0f      %8.5f\n",
            ((double) avgcomptime)/P,((double) avgtranstime)/P,avgfractime/P);
     printf("  Max        %10ld     %10ld      %8.5f\n",
-     maxtotal,transtime,maxfrac);
+	   maxtotal,transtime,maxfrac);
     printf("  Min        %10ld     %10ld      %8.5f\n",
-     mintotal,transtime2,minfrac);
+	   mintotal,transtime2,minfrac);
   }
   Global->starttime = start;
   printf("\n");
   printf("                 TIMING INFORMATION\n");
   printf("Start time                        : %16lu\n",
-    Global->starttime);
+	  Global->starttime);
   printf("Initialization finish time        : %16lu\n",
-    Global->initdonetime);
+	  Global->initdonetime);
   printf("Overall finish time               : %16lu\n",
-    Global->finishtime);
+	  Global->finishtime);
   printf("Total time with initialization    : %16lu\n",
-    Global->finishtime-Global->starttime);
+	  Global->finishtime-Global->starttime);
   printf("Total time without initialization : %16lu\n",
-    Global->finishtime-Global->initdonetime);
+	  Global->finishtime-Global->initdonetime);
   printf("Overall transpose time            : %16ld\n",
          transtime);
   printf("Overall transpose fraction        : %16.5f\n",
@@ -405,7 +404,7 @@ int main(int argc, char *argv[])
     ck3 = CheckSum(x);
     printf("              INVERSE FFT TEST RESULTS\n");
     printf("Checksum difference is %.3f (%.3f, %.3f)\n",
-     ck1-ck3, ck1, ck3);
+	   ck1-ck3, ck1, ck3);
     if (fabs(ck1-ck3) < 0.001) {
       printf("TEST PASSED\n");
     } else {
@@ -465,12 +464,12 @@ void SlaveStart()
 
   /* perform forward FFT */
   FFT1D(1, M, N, x, trans, upriv, umain2, MyNum, &l_transtime, MyFirst, 
-  MyLast, pad_length, test_result, dostats);
+	MyLast, pad_length, test_result, dostats);
 
   /* perform backward FFT */
   if (test_result) {
     FFT1D(-1, M, N, x, trans, upriv, umain2, MyNum, &l_transtime, MyFirst, 
-    MyLast, pad_length, test_result, dostats);
+	  MyLast, pad_length, test_result, dostats);
   }  
 
   if ((MyNum == 0) || (dostats)) {
@@ -499,7 +498,7 @@ double TouchArray(double *x, double *scratch, double *u, double *upriv, long MyF
     for (i=0;i<rootN;i++) {
       tot += x[2*(k+i)] + x[2*(k+i)+1] + 
              scratch[2*(k+i)] + scratch[2*(k+i)+1] +
-       u[2*(k+i)] + u[2*(k+i)+1];
+	     u[2*(k+i)] + u[2*(k+i)+1];
     }
   }  
   return tot;
@@ -550,7 +549,7 @@ void InitU(long N, double *u)
     base = n1-1;
     for (j=0; j<n1; j++) {
       if (base+j > rootN-1) { 
-  return;
+	return;
       }
       u[2*(base+j)] = cos(2.0*PI*j/(2*n1));
       u[2*(base+j)+1] = -sin(2.0*PI*j/(2*n1));
@@ -730,14 +729,14 @@ void Transpose(long n1, double *src, double *dest, long MyNum, long MyFirst, lon
       h_off = firstfirst;
       for (m=0; m<numblks; m++) {
         for (i=0; i<blksize; i++) {
-    v = v_off + i;
+	  v = v_off + i;
           for (j=0; j<blksize; j++) {
-      h = h_off + j;
+	    h = h_off + j;
             dest[2*(h*n1p+v)] = src[2*(v*n1p+h)];
             dest[2*(h*n1p+v)+1] = src[2*(v*n1p+h)+1];
           }
         }
-  h_off += blksize;
+	h_off += blksize;
       }
       v_off+=blksize;
     }
@@ -749,14 +748,14 @@ void Transpose(long n1, double *src, double *dest, long MyNum, long MyFirst, lon
       h_off = firstfirst;
       for (m=0; m<numblks; m++) {
         for (i=0; i<blksize; i++) {
-    v = v_off + i;
+	  v = v_off + i;
           for (j=0; j<blksize; j++) {
             h = h_off + j;
             dest[2*(h*n1p+v)] = src[2*(v*n1p+h)];
             dest[2*(h*n1p+v)+1] = src[2*(v*n1p+h)+1];
           }
         }
-  h_off += blksize;
+	h_off += blksize;
       }
       v_off+=blksize;
     }
@@ -772,7 +771,7 @@ void Transpose(long n1, double *src, double *dest, long MyNum, long MyFirst, lon
           h = h_off + j;
           dest[2*(h*n1p+v)] = src[2*(v*n1p+h)];
           dest[2*(h*n1p+v)+1] = src[2*(v*n1p+h)+1];
-  }
+	}
       }
       h_off += blksize;
     }
@@ -833,18 +832,18 @@ void FFT1DOnce(long direction, long M, long N, double *u, double *x)
       x1 = &x[2*(k*L)];
       x2 = &x[2*(k*L+Lstar)];
       for (j=0; j<Lstar; j++) {
-  omega_r = u1[2*j]; 
+	omega_r = u1[2*j]; 
         omega_c = direction*u1[2*j+1];
-  x_r = x2[2*j]; 
+	x_r = x2[2*j]; 
         x_c = x2[2*j+1];
-  tau_r = omega_r*x_r - omega_c*x_c;
-  tau_c = omega_r*x_c + omega_c*x_r;
-  x_r = x1[2*j]; 
+	tau_r = omega_r*x_r - omega_c*x_c;
+	tau_c = omega_r*x_c + omega_c*x_r;
+	x_r = x1[2*j]; 
         x_c = x1[2*j+1];
-  x2[2*j] = x_r - tau_r;
-  x2[2*j+1] = x_c - tau_c;
-  x1[2*j] = x_r + tau_r;
-  x1[2*j+1] = x_c + tau_c;
+	x2[2*j] = x_r - tau_r;
+	x2[2*j+1] = x_c - tau_c;
+	x1[2*j] = x_r + tau_r;
+	x1[2*j+1] = x_c + tau_c;
       }
     }
   }

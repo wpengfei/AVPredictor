@@ -14,29 +14,48 @@ rm work_dir/trace_sync.log
 #apache_httpd  6 6    5 5
 #mozilla  1 1
 
-#FFT
-#LU
-#RADIX
 
 echo ================================================ monitored run
 
-time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
 
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/FFT -p 2
+## base runtime
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/pinbase.so -- test_cases/splash2/fft/FFT -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/pinbase.so -- test_cases/splash2/radix/RADIX -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/pinbase.so -- test_cases/splash2/lu-contiguous_blocks/LU -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/pinbase.so -- test_cases/splash2/lu-non_contiguous_blocks/LU -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/pinbase.so -- test_cases/splash2/ocean-contiguous_partitions/OCEAN -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/pinbase.so -- test_cases/splash2/ocean-non_contiguous_partitions/OCEAN -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/pinbase.so -- test_cases/splash2/fmm/FMM < test_cases/splash2/fmm/inputs/input.256
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/pinbase.so -- test_cases/splash2/water-nsquared/WATER-NSQUARED < test_cases/splash2/water-nsquared/input
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/pinbase.so -- test_cases/splash2/water-spatial/WATER-SPATIAL < test_cases/splash2/water-spatial/input
 
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -b15kf test_dir/testfile
+## monitor runtime
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/fft/FFT -p 2
+time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/radix/RADIX -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/lu-contiguous_blocks/LU -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/lu-non_contiguous_blocks/LU -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/ocean-contiguous_partitions/OCEAN -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/ocean-non_contiguous_partitions/OCEAN -p 2
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/fmm/FMM < test_cases/splash2/fmm/inputs/input.256
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/water-nsquared/WATER-NSQUARED < test_cases/splash2/water-nsquared/input
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_cases/splash2/water-spatial/WATER-SPATIAL < test_cases/splash2/water-spatial/input
 
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -dfk test_dir/testfile1.bz2 
 
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pfscan -dlv file test_dir/testfile
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/main_bank_lock
 
-#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -b15kf test_dir/testfile
 
-#sudo time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so --  ./test_apache.sh
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pbzip2 -dfk test_dir/testfile1.bz2 
 
-#time sudo  pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/apachectl start
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/pfscan -dlv file test_dir/testfile
 
-#time sudo pin-3.2-81205-gcc-linux/pin -follow_execv -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/httpd -k start
+#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png
+
+#sudo time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so --  ./test_apache.sh
+
+#time sudo  pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/apachectl start
+
+#time sudo pin-3.7-97619-gcc-linux/pin -follow_execv -t work_dir/obj-ia32/monitor.so -- /usr/local/apache2/bin/httpd -k start
 
 #time /usr/local/apache2/bin/ab -n 2 -c 2 http://localhost/index.php
 
@@ -59,21 +78,21 @@ for curfile in $(ls ${resultdir})
 do
     if test -f ${resultdir}/${curfile}
     then
-    	echo ${curfile} "work_dir/groupset/"${curfile}
+    	echo "work_dir/groupset/"${curfile}
 
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
+    	time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so  -- test_dir/main_bank_lock 
 
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/FFT -p 2  
+    	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/FFT -p 2  
 
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -b15kf test_dir/testfile  
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -dfk test_dir/testfile1.bz2  
+    	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -b15kf test_dir/testfile  
+    	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pbzip2 -dfk test_dir/testfile1.bz2  
     	
-    	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pfscan -dlv file test_dir/testfile 
+    	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/pfscan -dlv file test_dir/testfile 
 
-	#time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png 
+	#time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so -- test_dir/aget -n10 http://bbs.pdfwork.cn/static/image/common/research.png 
    
 
-        #time pin-3.2-81205-gcc-linux/pin -t work_dir/obj-ia32/controller.so  --  /usr/local/apache2/bin/ab -n 100 -c 2 http://localhost/index.php/ 
+        #time pin-3.7-97619-gcc-linux/pin -t work_dir/obj-ia32/controller.so  --  /usr/local/apache2/bin/ab -n 100 -c 2 http://localhost/index.php/ 
 
 
     fi

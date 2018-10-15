@@ -6,51 +6,7 @@
 #include <string.h>
 #include <sstream>
 
-#define SLEEP_TIME 5
 
-#define max_size 32 // default max size for each group
-
-unsigned int ci_count = 0;
-unsigned int cur_ci = 0; //current CI that being processed
-
-unsigned int type[max_size] = {0}; // 0: to move instructions; 1: to move critical sections.
-
-unsigned int first_id[max_size] = {0};
-unsigned int first_arg1[max_size] = {0};
-unsigned int first_arg2[max_size] = {0};
-
-unsigned int second_id[max_size] = {0};
-unsigned int second_arg1[max_size] = {0};
-unsigned int second_arg2[max_size] = {0};
-
-unsigned int inter_id[max_size] = {0};
-unsigned int inter_arg1[max_size] = {0};
-unsigned int inter_arg2[max_size] = {0};
-
-
-unsigned int is_locked_type = 0;
-
-COUNT first_tid = 0;
-ADDRESS first_inst = 0; //use for non-critical section situations
-ADDRESS first_addr = 0;
-ADDRESS first_lock = 0; // use for critical section situations
-ADDRESS first_unlock = 0;
-
-COUNT second_tid = 0;
-ADDRESS second_inst = 0;
-ADDRESS second_addr = 0;
-ADDRESS second_lock = 0;
-ADDRESS second_unlock = 0;
-
-COUNT inter_tid = 0;
-ADDRESS inter_inst = 0;
-ADDRESS inter_addr = 0;
-ADDRESS inter_lock = 0;
-ADDRESS inter_unlock = 0;
-
-bool first_ready = false;
-bool inter_ready = false;
-bool second_ready = false;
 
 int load_next_ci(){
 
@@ -98,7 +54,7 @@ int load_next_ci(){
 
 }
 
-VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
+VOID BeforeMemAccess(UINT32 ip, UINT32 addr, THREADID tid, UINT32 rtnName){
     //delay the inter to between first and second
     //pattern 2:
     //
@@ -116,30 +72,30 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
         return;
 
     if(first_ready == false && inter_ready == false && second_ready == false){
-        if((ADDRINT)ip == first_inst && (ADDRINT)addr == first_addr && (COUNT)tid == first_tid){
+        if(ip == first_inst && addr == first_addr && tid == first_tid){
             first_ready = true;
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[1][execute First] inst:%x, addr:%x, tid:%u, rtn:%s\033[0m\n",(ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
-            }
+            #ifdef DEBUG_REPLAY
+                printf("\033[01;34m[1][execute First] inst:0x%x, addr:0x%x, tid:%u, rtn:%s\033[0m\n",ip, addr, tid, (char*)rtnName);
+            #endif
             return; //return early to imporve efficiency
         }
-        else if((ADDRINT)ip == inter_inst && (ADDRINT)addr == inter_addr && (COUNT)tid == inter_tid){
-            timecounter = 0;
+        else if(ip == inter_inst && addr == inter_addr && tid == inter_tid){
+            countTimeout = 0;
             while(first_ready == false){ 
-                if(DEBUG_REPLAY){              
-                    printf("\033[01;33m[2][delay Inter] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
-                }
+                #ifdef DEBUG_REPLAY             
+                    printf("\033[01;33m[2][delay Inter] inst:0x%x, addr:0x%x, tid:%u, rtn:%s \033[0m\n", ip, addr, tid, (char*)rtnName);
+                #endif
                 PIN_Sleep(SLEEP_TIME);
-                timecounter++;
-                if (timecounter > TIMEOUT){
-                    printf("\033[01;33m[2][delay Inter] timeout!\033[0m\n");
+                countTimeout++;
+                if (countTimeout > TIMEOUT){
+                    //printf("\033[01;33m[2][delay Inter] timeout!\033[0m\n");
                     exit(0);
                 }
             }
             inter_ready = true;
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[3][execute Inter after delay] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
-            }
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[3][execute Inter after delay] inst:0x%x, addr:0x%x, tid:%u, rtn:%s \033[0m\n", ip,addr,tid,(char*)rtnName);
+            #endif
             return;
         }
         
@@ -147,49 +103,49 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
     }
     
     else if(first_ready == true && inter_ready == false && second_ready == false){ 
-        if((ADDRINT)ip == inter_inst && (ADDRINT)addr == inter_addr && (COUNT)tid == inter_tid){
+        if(ip == inter_inst && addr == inter_addr && tid == inter_tid){
             inter_ready = true;
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[4][execute Inter] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
-            }
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[4][execute Inter] inst:0x%x, addr:0x%x, tid:%u, rtn:%s \033[0m\n", ip,addr,tid,(char*)rtnName);
+            #endif
             return;
         }
-        else if((ADDRINT)ip == second_inst && (ADDRINT)addr == second_addr && (COUNT)tid == second_tid){
-            timecounter = 0;
+        else if(ip == second_inst && addr == second_addr && tid == second_tid){
+            countTimeout = 0;
             while(inter_ready == false){  
-                if(DEBUG_REPLAY){              
-                    printf("\033[01;33m[5][delay Second] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
-                }
+                #ifdef DEBUG_REPLAY               
+                    printf("\033[01;33m[5][delay Second] inst:0x%x, addr:0x%x, tid:%u, rtn:%s \033[0m\n", ip,addr,tid,(char*)rtnName);
+                #endif
                 PIN_Sleep(SLEEP_TIME);
-                timecounter++;
-                if (timecounter > TIMEOUT){
-                    printf("\033[01;33m[2][delay Second] timeout!\033[0m\n");
+                countTimeout++;
+                if (countTimeout > TIMEOUT){  
+                    //printf("\033[01;33m[2][delay Second] timeout!\033[0m\n");
                     exit(0);
                 }
             }
             second_ready = true;
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[6][execute Second after delay] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n", (ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
-            }
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[6][execute Second after delay] inst:0x%x, addr:0x%x, tid:%u, rtn:%s \033[0m\n", ip,addr,tid,(char*)rtnName);
+            #endif
             return;
         }
         
 
     }
     else if(first_ready == true && inter_ready == true && second_ready == false){ 
-        if((ADDRINT)ip == second_inst && (ADDRINT)addr == second_addr && (COUNT)tid == second_tid){
+        if(ip == second_inst && addr == second_addr && tid == second_tid){
             second_ready = true;
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[5][execute Second] inst:%x, addr:%x, tid:%u, rtn:%s \033[0m\n",(ADDRINT)ip,(ADDRINT)addr,(COUNT)tid,(char*)rtnName);
-            }
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[5][execute Second] inst:0x%x, addr:0x%x, tid:%u, rtn:%s \033[0m\n",ip,addr,tid,(char*)rtnName);
+            #endif
             return;
         }
         
     }
     else if(first_ready == true && inter_ready == true && second_ready == true){ 
-        if(DEBUG_REPLAY){
+        #ifdef DEBUG_REPLAY  
             printf("\033[01;34m[5][load next ci] \033[0m\n");
-        }
+        #endif
         load_next_ci();
         return;
     }
@@ -199,7 +155,7 @@ VOID BeforeMemAccess(VOID * ip, VOID * addr, THREADID tid, VOID* rtnName){
 
 
 
-VOID beforeThreadLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
+VOID beforeThreadLock_replay(THREADID tid, UINT32 ip, UINT32 callsite_v)
 {
 
     if(!is_locked_type) //only locked type is handled in this function.
@@ -207,65 +163,65 @@ VOID beforeThreadLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
     //PIN_GetLock(&lock, tid+1);
     
     if(first_ready == false && inter_ready == false && second_ready == false){
-        if((COUNT)tid == inter_tid && (ADDRESS)callsite_v == inter_lock){
-            timecounter = 0;
+        if(tid == inter_tid && callsite_v == inter_lock){
+            countTimeout = 0;
             while(first_ready == false){  
-                if(DEBUG_REPLAY){               
-                    printf("\033[01;33m[beforeThreadLock][delay Inter] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-                }
+                #ifdef DEBUG_REPLAY                
+                    printf("\033[01;33m[beforeThreadLock][delay Inter] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+                #endif
                 PIN_Sleep(SLEEP_TIME);
-                timecounter++;
-                if (timecounter > TIMEOUT){
-                    printf("\033[01;33m[2][beforeThreadLock][delay Inter] timeout!\033[0m\n");
+                countTimeout++;
+                if (countTimeout > TIMEOUT){
+                    //printf("\033[01;33m[2][beforeThreadLock][delay Inter] timeout!\033[0m\n");
                     exit(0);
                 }
             }
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[beforeThreadLock][enter Inter after delay] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-            }
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[beforeThreadLock][enter Inter after delay] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+            #endif
             return;
         }
-        else if((COUNT)tid == first_tid && (ADDRESS)callsite_v == first_lock){
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[beforeThreadLock][enter First] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-            }
+        else if(tid == first_tid && callsite_v == first_lock){
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[beforeThreadLock][enter First] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+            #endif
             return;
         }
         
     }
     else if(first_ready == true && inter_ready == false && second_ready == false){ 
-        if((COUNT)tid == second_tid && (ADDRESS)callsite_v == second_lock){
-            timecounter = 0;
+        if(tid == second_tid && callsite_v == second_lock){
+            countTimeout = 0;
             while(inter_ready == false){               
-                if(DEBUG_REPLAY){
-                    printf("\033[01;33m[beforeThreadLock][delay Second] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-                }
+                #ifdef DEBUG_REPLAY  
+                    printf("\033[01;33m[beforeThreadLock][delay Second] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+                #endif
                 PIN_Sleep(SLEEP_TIME);
-                timecounter++;
-                if (timecounter > TIMEOUT){
-                    printf("\033[01;33m[2][beforeThreadLock][delay Second] timeout!\033[0m\n");
+                countTimeout++;
+                if (countTimeout > TIMEOUT){ 
+                    //printf("\033[01;33m[2][beforeThreadLock][delay Second] timeout!\033[0m\n");
                     exit(0);
                 }
             }
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[beforeThreadLock][enter Second after delay] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-            }
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[beforeThreadLock][enter Second after delay] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+            #endif
             return;
         }
-        else if((COUNT)tid == inter_tid && (ADDRESS)callsite_v == inter_lock){
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[beforeThreadLock][enter Inter] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-            }
+        else if(tid == inter_tid && callsite_v == inter_lock){
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[beforeThreadLock][enter Inter] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+            #endif
             return;
         }
         
 
     }
     else if(first_ready == true && inter_ready == true && second_ready == false){
-        if((COUNT)tid == second_tid && (ADDRESS)callsite_v == second_lock){
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[beforeThreadLock][enter Second] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-            }
+        if(tid == second_tid && callsite_v == second_lock){
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[beforeThreadLock][enter Second] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+            #endif
             return;
         }
         
@@ -274,7 +230,7 @@ VOID beforeThreadLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
 
     //PIN_ReleaseLock(&lock);
 }
-VOID beforeThreadUnLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
+VOID beforeThreadUnLock_replay(THREADID tid, UINT32 ip, UINT32 callsite_v)
 {
     if(!is_locked_type) //only locked type is handled in this function.
         return;
@@ -282,39 +238,39 @@ VOID beforeThreadUnLock_replay(THREADID tid, VOID * ip, ADDRINT callsite_v)
     //PIN_GetLock(&lock, tid+1);
 
     if(first_ready == false && inter_ready == false && second_ready == false){
-        if((COUNT)tid == first_tid && (ADDRESS)callsite_v == first_unlock){
+        if(tid == first_tid && callsite_v == first_unlock){
             first_ready = true;
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[beforeThreadUnLock][executed First] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-            }
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[beforeThreadUnLock][executed First] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+            #endif
             return;
         }
         
     }
     else if(first_ready == true && inter_ready == false && second_ready == false){ 
-        if((COUNT)tid == inter_tid && (ADDRESS)callsite_v == inter_unlock){
+        if(tid == inter_tid && callsite_v == inter_unlock){
             inter_ready = true;
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[beforeThreadUnLock][executed Inter] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-            }
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[beforeThreadUnLock][executed Inter] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+            #endif
             return;
         }
         
     }
     else if(first_ready == true && inter_ready == true && second_ready == false){ 
-        if((COUNT)tid == second_tid && (ADDRESS)callsite_v == second_unlock){
+        if(tid == second_tid && callsite_v == second_unlock){
             second_ready = true;
-            if(DEBUG_REPLAY){
-                printf("\033[01;34m[beforeThreadUnLock][executed Second] callsite_v:%x, tid:%u \033[0m\n", (ADDRESS)callsite_v,(COUNT)tid);
-            }
+            #ifdef DEBUG_REPLAY  
+                printf("\033[01;34m[beforeThreadUnLock][executed Second] callsite_v:0x%x, tid:%u \033[0m\n", callsite_v,tid);
+            #endif
             return;
         }
         
     }
     else if(first_ready == true && inter_ready == true && second_ready == true){ 
-        if(DEBUG_REPLAY){
+        #ifdef DEBUG_REPLAY  
             printf("\033[01;34m[load next ci]\033[0m\n");
-        }
+        #endif
         load_next_ci();
     }
     //PIN_ReleaseLock(&lock);
@@ -330,11 +286,17 @@ VOID Instruction(INS ins, VOID *v)
         return;
     if(INS_IsBranchOrCall(ins)) 
         return;
-    
-    RTN rtn = INS_Rtn(ins);  
-    if(isLibRtnName(RTN_Name(rtn))) 
-        return;
 
+    if(INS_IsStackRead(ins))
+        return;
+    if(INS_IsStackWrite(ins))
+        return; 
+
+    
+    RTN rtn = INS_Rtn(ins); 
+    //if(isLibRtnName(RTN_Name(rtn))) 
+        //return; 
+    
     if(INS_IsMemoryRead(ins)){
         INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)BeforeMemAccess, IARG_INST_PTR, IARG_MEMORYREAD_EA, 
           IARG_THREAD_ID, IARG_PTR, (VOID*)RTN_Name(rtn).c_str(), IARG_END);
@@ -369,19 +331,6 @@ VOID Routine(RTN rtn, VOID *v)
 }
 
 
-
-
-
-VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
-{
-
-}
-
-// This routine is executed every time a thread is destroyed.
-VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
-{
-
-}
 
 // This function is called when the application exits
 VOID Fini(INT32 code, VOID *v)
@@ -472,17 +421,17 @@ int main(int argc, char * argv[])
 
     ci_count = 0;
     while (ci_count < max_size){
-        if((fscanf(replay_log,"%u[%u]%x,%x; [%u]%x,%x; [%u]%x,%x\n",
+        if((fscanf(replay_log,"%u[%u]%d,%d; [%u]%d,%d; [%u]%d,%d\n",
                 &type[ci_count], &first_id[ci_count], &first_arg1[ci_count], &first_arg2[ci_count], 
                 &second_id[ci_count], &second_arg1[ci_count], &second_arg2[ci_count], 
                 &inter_id[ci_count], &inter_arg1[ci_count], &inter_arg2[ci_count]))!=EOF){
 
-
-            printf("\033[22;36m[load CI from file]:%u[%u]%x,%x; [%u]%x,%x; [%u]%x,%x \033[0m\n",
+            #ifdef DEBUG_REPLAY  
+                printf("\033[22;36m[load CI from file]:%u[%u]0x%x,0x%x; [%u]0x%x,0x%x; [%u]%x,%x \033[0m\n",
                 type[ci_count], first_id[ci_count], first_arg1[ci_count], first_arg2[ci_count], 
                 second_id[ci_count], second_arg1[ci_count], second_arg2[ci_count], 
                 inter_id[ci_count], inter_arg1[ci_count], inter_arg2[ci_count]);
-
+            #endif
             ci_count++;
 
 
@@ -492,7 +441,9 @@ int main(int argc, char * argv[])
 
     }
 
-    printf("Loaded %d CI(s) for replay\n", ci_count);
+    #ifdef DEBUG_REPLAY  
+        printf("Loaded %d CI(s) for replay\n", ci_count);
+    #endif
 
     cur_ci = 0;
     load_next_ci();
@@ -509,9 +460,6 @@ int main(int argc, char * argv[])
     // Register Routine to be called to instrument rtn
     RTN_AddInstrumentFunction(Routine, 0);
 
-    // Register Analysis routines to be called when a thread begins/ends
-    PIN_AddThreadStartFunction(ThreadStart, 0);
-    PIN_AddThreadFiniFunction(ThreadFini, 0);
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
